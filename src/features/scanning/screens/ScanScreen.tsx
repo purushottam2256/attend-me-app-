@@ -1,0 +1,1412 @@
+/**
+ * ScanScreen - Premium BLE Attendance Scanning Interface
+ *
+ * Design Philosophy:
+ * - Minimal: Clean lines, generous whitespace
+ * - Premium: Deep gradients, subtle shadows
+ * - Polished: Micro-animations, smooth transitions
+ *
+ * States:
+ * - HANDSHAKE: Initial verification (2s)
+ * - SCANNING: Active radar mode
+ * - SUBMITTING: Processing submission
+ * - SUCCESS: Completion animation
+ */
+
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  Easing,
+  StatusBar,
+  ActivityIndicator,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from "@react-navigation/native";
+import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import {
+  RadarAnimation,
+  ControlCluster,
+  InstructionsModal,
+  HeadcountModal,
+  StudentList,
+  OverrideModal,
+  ScanBlockedModal,
+  type BlockReason,
+} from "../components";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+// Screen states
+type ScanState = "HANDSHAKE" | "SCANNING" | "SUBMITTING" | "SUCCESS";
+
+// Timer presets in seconds
+const TIMER_PRESETS = [60, 180, 300, 600]; // 1, 3, 5, 10 minutes
+
+import { useAttendance, type AttendanceStudent } from "../hooks";
+import { useBLE } from "../hooks/useBLE";
+import { isBLEReady } from "../../../services/bleService";
+import {
+  Gradients,
+  Primary,
+  Success,
+  Danger,
+  Neutral,
+} from "../../../constants/Theme";
+import {
+  getTodaySchedule,
+  type TimetableSlot,
+} from "../../../services/dashboardService";
+import { supabase } from "../../../config/supabase";
+import { useTheme } from "../../../contexts";
+
+// =============================================================================
+// PREMIUM SCANNER - Deep Teal Theme (Same as Home Page)
+// =============================================================================
+
+const COLORS = {
+  // Gradient background (Deep Teal - SAME AS HOME PAGE)
+  gradientStart: "#0D4A4A",
+  gradientMid: "#1A6B6B",
+  gradientEnd: "#0F3D3D",
+
+  // Accent (Mint Green)
+  accent: "#3DDC97",
+  accentGlow: "rgba(61, 220, 151, 0.25)",
+  accentSubtle: "rgba(61, 220, 151, 0.12)",
+
+  // Surfaces (Glassmorphism)
+  surface: "rgba(255, 255, 255, 0.08)",
+  surfaceElevated: "rgba(255, 255, 255, 0.12)",
+  surfacePressed: "rgba(255, 255, 255, 0.05)",
+
+  // Text (High contrast)
+  textPrimary: "#FFFFFF",
+  textSecondary: "rgba(255, 255, 255, 0.70)",
+  textMuted: "rgba(255, 255, 255, 0.45)",
+
+  // Borders
+  border: "rgba(255, 255, 255, 0.12)",
+  borderSubtle: "rgba(255, 255, 255, 0.06)",
+
+  // Status Colors
+  success: "#34C759",
+  danger: "#FF6B6B",
+  warning: "#FFD93D",
+  info: "#5AC8FA",
+};
+
+// Theme-aware colors for cards and lists
+const getThemeColors = (isDark: boolean) => ({
+  ...COLORS,
+  // Cards (Pure black with subtle border for depth)
+  cardBackground: isDark ? "#1C1C1E" : "rgba(255, 255, 255, 0.95)",
+  cardBackgroundElevated: isDark ? "#2C2C2E" : "#FFFFFF",
+  cardBorder: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)",
+
+  // List backgrounds
+  listBackground: isDark ? "#000000" : "#F2F2F7",
+  surfaceSolid: isDark ? "#000000" : "#FFFFFF",
+
+  // Text on cards
+  textOnCard: isDark ? "#FFFFFF" : "#1C1C1E",
+  textSecondaryOnCard: isDark
+    ? "rgba(255, 255, 255, 0.6)"
+    : "rgba(0, 0, 0, 0.55)",
+});
+
+export const ScanScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const insets = useSafeAreaInsets();
+  const { isDark } = useTheme();
+
+  // Theme-aware colors
+  const COLORS = getThemeColors(isDark);
+
+  // State for dynamically fetched live class (when not passed via route)
+  const [liveClassData, setLiveClassData] = useState<TimetableSlot | null>(
+    null,
+  );
+  const [loadingLiveClass, setLoadingLiveClass] = useState(false);
+  const [noLiveClassError, setNoLiveClassError] = useState<string | null>(null);
+
+  // Use route classData if provided, otherwise use fetched liveClassData
+  const routeClassData = route.params?.classData;
+  const classData = routeClassData || liveClassData;
+
+  // Auto-fetch current live class if not provided via route
+  useEffect(() => {
+    const fetchLiveClass = async () => {
+      if (routeClassData) return; // Already have class data from route
+
+      setLoadingLiveClass(true);
+      setNoLiveClassError(null);
+
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          setNoLiveClassError("Not authenticated");
+          return;
+        }
+
+        const schedule = await getTodaySchedule(user.id);
+
+        // Find the current live class
+        const now = new Date();
+        const currentTimeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+
+        const liveClass = schedule.find((slot) => {
+          return (
+            currentTimeStr >= slot.start_time && currentTimeStr <= slot.end_time
+          );
+        });
+
+        if (liveClass) {
+          console.log(
+            "[ScanScreen] Auto-fetched live class:",
+            liveClass.subject?.name,
+          );
+          setLiveClassData(liveClass);
+        } else {
+          setNoLiveClassError("No live class right now");
+        }
+      } catch (err) {
+        console.error("[ScanScreen] Error fetching live class:", err);
+        setNoLiveClassError("Failed to load schedule");
+      } finally {
+        setLoadingLiveClass(false);
+      }
+    };
+
+    fetchLiveClass();
+  }, [routeClassData]);
+
+  const subjectName = classData?.subject?.name || "Loading...";
+  const section = classData
+    ? `${classData.target_dept || "CSE"}-${
+        classData.target_year || "3"
+      }-${classData.target_section || "A"}`
+    : "Loading...";
+  const classKey = `${subjectName}_${section}`;
+  const endTime = classData?.end_time || "00:00";
+
+  // UI State
+  const [scanState, setScanState] = useState<ScanState>("HANDSHAKE");
+  const [currentBatch, setCurrentBatch] = useState<"full" | "b1" | "b2">(
+    "full",
+  );
+  const [isScanning, setIsScanning] = useState(false);
+  const [isAutoPilot, setIsAutoPilot] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(180);
+  const [timerPresetIndex, setTimerPresetIndex] = useState(1);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [showHeadcount, setShowHeadcount] = useState(false);
+  const [showOverride, setShowOverride] = useState(false);
+  const [previousAttendance, setPreviousAttendance] = useState<{
+    className: string;
+    takenAt: string;
+  } | null>(null);
+
+  // Scan blocked state
+  const [showBlocked, setShowBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState<BlockReason>("no_class");
+
+  // Show blocked modal when no live class (break time)
+  useEffect(() => {
+    if (noLiveClassError && !routeClassData) {
+      console.log("[ScanScreen] No live class - showing blocked modal");
+      setBlockReason("no_class");
+      setShowBlocked(true);
+    }
+  }, [noLiveClassError, routeClassData]);
+
+  // Validation state for handshake checks
+  const [validationStatus, setValidationStatus] = useState({
+    rosterLoaded: false,
+    bleAvailable: true,
+    scheduleValid: true,
+    noPreviousScan: true,
+  });
+
+  // College hours configuration
+  const COLLEGE_START_HOUR = 8;
+  const COLLEGE_START_MINUTE = 30;
+  const COLLEGE_END_HOUR = 17;
+  const COLLEGE_END_MINUTE = 0;
+
+  // Real data from Supabase
+  const {
+    students,
+    loading: studentsLoading,
+    error: studentsError,
+    presentCount,
+    absentCount,
+    pendingCount,
+    totalCount,
+    updateStudentStatus,
+    submitAttendance: submitToSupabase,
+    refreshStudents,
+  } = useAttendance({ classData, batch: currentBatch });
+
+  // Animations
+  const handshakeRotation = useRef(new Animated.Value(0)).current;
+  const handshakeProgress = useRef(new Animated.Value(0)).current;
+  const successScale = useRef(new Animated.Value(0)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+
+  // Reset state when screen comes into focus and check for previous attendance
+  useFocusEffect(
+    useCallback(() => {
+      // Reset to initial state
+      setScanState("HANDSHAKE");
+      setIsScanning(false);
+      setShowHeadcount(false);
+      setShowOverride(false);
+      refreshStudents();
+      // Reset animations
+      handshakeProgress.setValue(0);
+      handshakeRotation.setValue(0);
+      contentOpacity.setValue(0);
+      headerOpacity.setValue(0);
+
+      // Check for previous attendance
+      const checkPreviousAttendance = async () => {
+        try {
+          const stored = await AsyncStorage.getItem(
+            `@attend_me/attendance_${classKey}`,
+          );
+          if (stored) {
+            const data = JSON.parse(stored);
+            setPreviousAttendance({
+              className: `${subjectName} - ${section}`,
+              takenAt: data.takenAt,
+            });
+            // Show confirmation popup
+            setShowOverride(true);
+          }
+        } catch (error) {
+          console.log("No previous attendance found");
+        }
+      };
+
+      // Validate scan timing
+      const validateScanTiming = () => {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+        const collegeStartMinutes =
+          COLLEGE_START_HOUR * 60 + COLLEGE_START_MINUTE;
+        const collegeEndMinutes = COLLEGE_END_HOUR * 60 + COLLEGE_END_MINUTE;
+
+        // Check if before college hours
+        if (currentTimeMinutes < collegeStartMinutes) {
+          setBlockReason("before_hours");
+          setShowBlocked(true);
+          return false;
+        }
+
+        // Check if after college hours
+        if (currentTimeMinutes > collegeEndMinutes) {
+          setBlockReason("after_hours");
+          setShowBlocked(true);
+          return false;
+        }
+
+        // NOTE: Disabled strict class validation for development/testing
+        // In production, uncomment this block:
+        /*
+        // Check if class data is missing (no class for this slot)
+        if (!classData || !classData.subject) {
+          setBlockReason("no_class");
+          setShowBlocked(true);
+          return false;
+        }
+
+        // Check if class has already ended (with grace period of 15 min)
+        if (classData.end_time) {
+          const [endHour, endMin] = classData.end_time.split(":").map(Number);
+          const classEndMinutes = endHour * 60 + endMin + 15; // 15 min grace
+          if (currentTimeMinutes > classEndMinutes) {
+            setBlockReason("class_ended");
+            setShowBlocked(true);
+            return false;
+          }
+        }
+        */
+
+        return true;
+      };
+
+      // Only validate if not in manual mode (late attendance) or skipValidation
+      const isManualMode = route.params?.manual === true;
+      const skipValidation = route.params?.skipValidation === true;
+      if (!isManualMode && !skipValidation) {
+        validateScanTiming();
+      }
+
+      checkPreviousAttendance();
+    }, [
+      handshakeProgress,
+      handshakeRotation,
+      contentOpacity,
+      headerOpacity,
+      classKey,
+      subjectName,
+      section,
+      classData,
+      route.params?.manual,
+    ]),
+  );
+
+  // Handshake phase animation (waits for override decision and validation)
+  useEffect(() => {
+    // Don't run handshake if scan is blocked - just show the blocked modal
+    if (showBlocked) {
+      return;
+    }
+
+    if (scanState === "HANDSHAKE" && !showOverride) {
+      // Update validation status based on current state
+      setValidationStatus((prev) => ({
+        ...prev,
+        rosterLoaded: !studentsLoading && students.length > 0,
+        noPreviousScan: !previousAttendance,
+      }));
+
+      // Rotation animation
+      Animated.loop(
+        Animated.timing(handshakeRotation, {
+          toValue: 1,
+          duration: 1200,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ).start();
+
+      // Progress animation
+      Animated.timing(handshakeProgress, {
+        toValue: 1,
+        duration: 2500, // Slightly longer to allow checks
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start();
+
+      // Transition to scanning after validation checks pass
+      const timeout = setTimeout(async () => {
+        // 1. Check if break time (no live class)
+        if (noLiveClassError || !classData) {
+          handshakeRotation.stopAnimation();
+          setBlockReason("no_class");
+          setShowBlocked(true);
+          return;
+        }
+
+        // 2. Check BLE/Bluetooth status using bleService directly
+        const bleCheck = await isBLEReady();
+        console.log("[ScanScreen] BLE Ready Check:", bleCheck);
+
+        if (!bleCheck.ready) {
+          handshakeRotation.stopAnimation();
+          const { Alert } = await import("react-native");
+
+          if (
+            bleCheck.reason === "bluetooth_off" ||
+            bleCheck.reason === "poweredOff"
+          ) {
+            Alert.alert(
+              "Bluetooth Required",
+              "Please turn on Bluetooth to scan for student devices.",
+              [
+                {
+                  text: "Go Back",
+                  onPress: () => navigation.navigate("Home" as never),
+                },
+                { text: "Retry", onPress: () => setScanState("HANDSHAKE") },
+              ],
+            );
+          } else if (
+            bleCheck.reason === "unauthorized" ||
+            bleCheck.reason === "denied"
+          ) {
+            Alert.alert(
+              "Bluetooth Permission Required",
+              "Please grant Bluetooth permission in your device settings.",
+              [
+                {
+                  text: "Go Back",
+                  onPress: () => navigation.navigate("Home" as never),
+                },
+              ],
+            );
+          } else {
+            Alert.alert(
+              "Bluetooth Unavailable",
+              `Cannot start scanning: ${bleCheck.reason || "Unknown error"}`,
+              [
+                {
+                  text: "Go Back",
+                  onPress: () => navigation.navigate("Home" as never),
+                },
+                { text: "Retry", onPress: () => setScanState("HANDSHAKE") },
+              ],
+            );
+          }
+          return;
+        }
+
+        // 3. Check if roster is loaded
+        if (studentsLoading) {
+          // Still loading - wait and retry
+          return;
+        }
+
+        if (students.length === 0) {
+          handshakeRotation.stopAnimation();
+          import("react-native").then(({ Alert }) => {
+            Alert.alert(
+              "No Students Found",
+              "Could not load the student roster for this class. Please try again.",
+              [
+                {
+                  text: "Go Back",
+                  onPress: () => navigation.navigate("Home" as never),
+                },
+                { text: "Retry", onPress: () => refreshStudents() },
+              ],
+            );
+          });
+          return;
+        }
+
+        // All checks passed - proceed to scanning
+        handshakeRotation.stopAnimation();
+
+        const hideInstructions = await AsyncStorage.getItem(
+          "@attend_me/hide_scan_instructions",
+        );
+        if (!hideInstructions) {
+          setShowInstructions(true);
+        }
+
+        setScanState("SCANNING");
+        setIsScanning(true);
+
+        Animated.parallel([
+          Animated.timing(contentOpacity, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(headerOpacity, {
+            toValue: 1,
+            duration: 400,
+            delay: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, 2500);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [
+    scanState,
+    showOverride,
+    handshakeRotation,
+    handshakeProgress,
+    contentOpacity,
+    headerOpacity,
+    studentsLoading,
+    students.length,
+    previousAttendance,
+  ]);
+
+  // Timer countdown - auto-submit when timer ends
+  useEffect(() => {
+    if (!isScanning || isAutoPilot || timeRemaining <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          // Timer ended - auto-submit attendance
+          console.log("[ScanScreen] Timer ended - auto-submitting attendance");
+          setIsScanning(false);
+          // Trigger submit after a small delay to ensure state updates
+          setTimeout(() => {
+            handleSubmitPress();
+          }, 100);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isScanning, isAutoPilot, timeRemaining]);
+
+  // Real BLE scanning integration
+  const {
+    bleState,
+    isScanning: bleIsScanning,
+    permissionsGranted,
+    detectedCount: bleDetectedCount,
+    error: bleError,
+    startBLEScan,
+    stopBLEScan,
+    requestPermissions,
+    studentsWithUUID,
+  } = useBLE({
+    students: students.map((s) => ({
+      id: s.id,
+      name: s.name,
+      rollNumber: s.rollNo,
+      bluetooth_uuid: s.bleUUID || null,
+      isPresent: s.status === "present",
+    })),
+    onStudentDetected: (studentId) => {
+      console.log("[ScanScreen] 🎯 Student detected by BLE:", studentId);
+      const student = students.find((s) => s.id === studentId);
+      console.log(
+        "[ScanScreen] Student info:",
+        student?.name,
+        student?.rollNo,
+        student?.bleUUID,
+      );
+      updateStudentStatus(studentId, "present");
+      console.log("[ScanScreen] ✅ Called updateStudentStatus for:", studentId);
+    },
+    // Only enable BLE when: scanning, in SCANNING state, classData loaded, roster loaded, no break time error
+    enabled:
+      isScanning &&
+      scanState === "SCANNING" &&
+      !!classData &&
+      students.length > 0 &&
+      !noLiveClassError,
+  });
+
+  // BLE scanning is controlled by the `enabled` prop in useBLE hook
+  // No manual sync needed - just toggle isScanning state
+
+  // Cleanup BLE when screen loses focus (React Navigation keeps screens mounted)
+  useFocusEffect(
+    useCallback(() => {
+      // On focus - nothing extra needed
+      return () => {
+        // On blur - stop BLE scanning using both hook and direct bleService call
+        console.log("[ScanScreen] Screen lost focus - stopping BLE scan");
+        stopBLEScan();
+        setIsScanning(false);
+        // Also directly stop via bleService to ensure it's stopped
+        import("../../../services/bleService").then(({ stopScanning }) => {
+          stopScanning();
+          console.log("[ScanScreen] Direct bleService.stopScanning called");
+        });
+      };
+    }, [stopBLEScan]),
+  );
+
+  // Update validation status based on BLE state
+  useEffect(() => {
+    setValidationStatus((prev) => ({
+      ...prev,
+      bleAvailable: bleState === "on",
+    }));
+  }, [bleState]);
+
+  // Auto-resume scanning when Bluetooth turns on (after being off)
+  const prevBleStateRef = useRef<string>(bleState);
+  useEffect(() => {
+    const prevState = prevBleStateRef.current;
+    prevBleStateRef.current = bleState;
+
+    // If BLE was off/unauthorized and now is on, and we're in SCANNING state
+    if (
+      (prevState === "off" || prevState === "unauthorized") &&
+      bleState === "on"
+    ) {
+      console.log("[ScanScreen] 🔄 Bluetooth enabled! Auto-resuming...");
+
+      // If we're in SCANNING state and have data, auto-start
+      if (scanState === "SCANNING" && classData && students.length > 0) {
+        console.log("[ScanScreen] ✅ Resuming scan automatically");
+        setIsScanning(true);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    }
+  }, [bleState, scanState, classData, students.length]);
+
+  // Handlers
+  const handleToggleScan = useCallback(() => {
+    // If starting scan (or resuming from pause)
+    if (!isScanning) {
+      // Only check for break time if we're first starting (not in SCANNING state yet)
+      // If scanState is already SCANNING, user is resuming from pause - allow it
+      if (scanState !== "SCANNING" && (noLiveClassError || !classData)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setShowBlocked(true);
+        setBlockReason("no_class");
+        return;
+      }
+
+      // Check if Bluetooth is definitely off (allow 'on', 'unknown', 'resetting')
+      if (
+        bleState === "off" ||
+        bleState === "unauthorized" ||
+        bleState === "unsupported"
+      ) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        // Show alert about Bluetooth being off
+        import("react-native").then(({ Alert }) => {
+          Alert.alert(
+            "Bluetooth Required",
+            bleState === "unauthorized"
+              ? "Please grant Bluetooth permission to scan for students."
+              : bleState === "unsupported"
+                ? "Bluetooth is not supported on this device."
+                : "Please turn on Bluetooth to scan for students.",
+            [{ text: "OK" }],
+          );
+        });
+        return;
+      }
+
+      // Check if roster is loaded (only for first start, not pause/resume)
+      if (scanState !== "SCANNING" && students.length === 0) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        import("react-native").then(({ Alert }) => {
+          Alert.alert(
+            "Loading Roster",
+            "Please wait for the student roster to load.",
+            [{ text: "OK" }],
+          );
+        });
+        return;
+      }
+    }
+
+    setIsScanning((prev) => !prev);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, [
+    isScanning,
+    scanState,
+    bleState,
+    students.length,
+    noLiveClassError,
+    classData,
+  ]);
+
+  const handleRescan = useCallback(() => {
+    refreshStudents();
+    setTimeRemaining(TIMER_PRESETS[timerPresetIndex]);
+    setIsScanning(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [timerPresetIndex, refreshStudents]);
+
+  const handleTimerPress = useCallback(() => {
+    const nextIndex = (timerPresetIndex + 1) % TIMER_PRESETS.length;
+    setTimerPresetIndex(nextIndex);
+    setTimeRemaining(TIMER_PRESETS[nextIndex]);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, [timerPresetIndex]);
+
+  const handleAutoPilotToggle = useCallback(() => {
+    setIsAutoPilot((prev) => !prev);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
+
+  const handleInstructionsClose = useCallback(() => {
+    setShowInstructions(false);
+  }, []);
+
+  const handleDontShowAgain = useCallback(async () => {
+    await AsyncStorage.setItem("@attend_me/hide_scan_instructions", "true");
+    setShowInstructions(false);
+  }, []);
+
+  const handleSubmitPress = useCallback(() => {
+    setIsScanning(false);
+    setShowHeadcount(true);
+  }, []);
+
+  const handleConfirmSubmit = useCallback(() => {
+    setShowHeadcount(false);
+    setScanState("SUBMITTING");
+
+    // Save attendance to Supabase and redirect
+    const saveAndRedirect = async () => {
+      try {
+        // Submit to Supabase
+        const { success, error } = await submitToSupabase();
+
+        if (!success) {
+          console.error("Supabase submit failed:", error);
+          // Still save locally as backup
+        }
+
+        // Also save locally for override check
+        const now = new Date();
+        const takenAt = now.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        await AsyncStorage.setItem(
+          `@attend_me/attendance_${classKey}`,
+          JSON.stringify({
+            takenAt,
+            presentCount,
+            absentCount,
+            date: now.toISOString(),
+          }),
+        );
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        // Redirect immediately
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate("Home");
+        }
+      } catch (err) {
+        console.error("Failed to save attendance:", err);
+      }
+    };
+
+    // Small delay for UI feedback
+    setTimeout(saveAndRedirect, 500);
+  }, [navigation, classKey, presentCount, absentCount, submitToSupabase]);
+
+  const handleCancel = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate("Home");
+    }
+  }, [navigation]);
+
+  const handleOverrideConfirm = useCallback(async () => {
+    // Clear the stored attendance record
+    await AsyncStorage.removeItem(`@attend_me/attendance_${classKey}`);
+    setPreviousAttendance(null);
+    setShowOverride(false);
+    // Reset animation values for fresh start
+    handshakeProgress.setValue(0);
+    handshakeRotation.setValue(0);
+    // The useEffect will now trigger and start handshake animation
+  }, [classKey, handshakeProgress, handshakeRotation]);
+
+  const handleOverrideCancel = useCallback(() => {
+    setShowOverride(false);
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate("Home");
+    }
+  }, [navigation]);
+
+  const handleStudentStatusChange = useCallback(
+    (studentId: string, newStatus: "pending" | "present" | "absent") => {
+      updateStudentStatus(studentId, newStatus);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    },
+    [updateStudentStatus],
+  );
+
+  // Render handshake phase
+  const renderHandshake = () => {
+    const rotation = handshakeRotation.interpolate({
+      inputRange: [0, 1],
+      outputRange: ["0deg", "360deg"],
+    });
+
+    const progressWidth = handshakeProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: ["0%", "100%"],
+    });
+
+    return (
+      <View style={[styles.handshakeContainer, { paddingTop: insets.top }]}>
+        {/* Animated circles */}
+        <View style={styles.handshakeVisual}>
+          <Animated.View
+            style={[styles.outerRing, { transform: [{ rotate: rotation }] }]}
+          >
+            <View style={styles.ringSegment} />
+          </Animated.View>
+          <View style={styles.innerCircle}>
+            <Ionicons name="bluetooth" size={40} color={COLORS.accent} />
+          </View>
+        </View>
+
+        <Text style={styles.handshakeTitle}>Securing Class</Text>
+        <Text style={styles.handshakeSubtitle}>
+          {subjectName} • {section}
+        </Text>
+
+        {/* Progress bar */}
+        <View style={styles.progressContainer}>
+          <Animated.View
+            style={[styles.progressBar, { width: progressWidth }]}
+          />
+        </View>
+
+        <Text style={styles.handshakeStatus}>
+          Downloading roster • Verifying Bluetooth
+        </Text>
+      </View>
+    );
+  };
+
+  // Render success phase
+  const renderSuccess = () => (
+    <View style={[styles.successContainer, { paddingTop: insets.top }]}>
+      <Animated.View
+        style={[styles.successCircle, { transform: [{ scale: successScale }] }]}
+      >
+        <Ionicons name="checkmark" size={64} color="#FFFFFF" />
+      </Animated.View>
+      <Text style={styles.successTitle}>Attendance Submitted!</Text>
+      <View style={styles.successStats}>
+        <View style={styles.successStatItem}>
+          <Text style={styles.successStatValue}>{presentCount}</Text>
+          <Text style={styles.successStatLabel}>Present</Text>
+        </View>
+        <View style={styles.successDivider} />
+        <View style={styles.successStatItem}>
+          <Text style={[styles.successStatValue, { color: COLORS.danger }]}>
+            {absentCount}
+          </Text>
+          <Text style={styles.successStatLabel}>Absent</Text>
+        </View>
+      </View>
+      <Text style={styles.successSubtext}>Returning to dashboard...</Text>
+    </View>
+  );
+
+  // Render submitting phase
+  const renderSubmitting = () => (
+    <View style={[styles.successContainer, { paddingTop: insets.top }]}>
+      <View style={styles.submittingSpinner}>
+        <ActivityIndicator size="large" color={COLORS.accent} />
+      </View>
+      <Text style={styles.handshakeTitle}>Submitting Attendance</Text>
+      <Text style={styles.handshakeSubtitle}>Please wait...</Text>
+    </View>
+  );
+
+  // Render scanning phase
+  const renderScanning = () => (
+    <Animated.View
+      style={[styles.scanningContainer, { opacity: contentOpacity }]}
+    >
+      {/* Header */}
+      <Animated.View
+        style={[
+          styles.header,
+          { paddingTop: insets.top + 12, opacity: headerOpacity },
+        ]}
+      >
+        <TouchableOpacity style={styles.backButton} onPress={handleCancel}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>{subjectName}</Text>
+          <Text style={styles.headerSubtitle}>{section}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={handleAutoPilotToggle}
+        >
+          <Ionicons
+            name={isAutoPilot ? "flash" : "flash-outline"}
+            size={22}
+            color={isAutoPilot ? COLORS.accent : COLORS.textSecondary}
+          />
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Radar Zone */}
+      <View style={styles.radarZone}>
+        <RadarAnimation
+          detected={presentCount}
+          total={totalCount}
+          isScanning={isScanning}
+          isAutoPilot={isAutoPilot}
+        />
+
+        <ControlCluster
+          timeRemaining={timeRemaining}
+          isScanning={isScanning}
+          isAutoPilot={isAutoPilot}
+          endTime={endTime}
+          currentBatch={currentBatch}
+          onToggleScan={handleToggleScan}
+          onRescan={handleRescan}
+          onTimerPress={handleTimerPress}
+          onBatchPress={() => {
+            // Cycle through batches: full -> b1 -> b2 -> full
+            setCurrentBatch((prev) => {
+              if (prev === "full") return "b1";
+              if (prev === "b1") return "b2";
+              return "full";
+            });
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }}
+        />
+      </View>
+
+      {/* Student List Zone */}
+      <View
+        style={[
+          styles.listZone,
+          { backgroundColor: isDark ? "#0A0A0A" : "#F8FAFC" },
+        ]}
+      >
+        <StudentList
+          students={students}
+          onStatusChange={handleStudentStatusChange}
+        />
+      </View>
+
+      {/* Bottom Action Bar */}
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            paddingBottom: insets.bottom + 12,
+            backgroundColor: isDark
+              ? "rgba(10, 10, 10, 0.98)"
+              : "rgba(248, 250, 252, 0.98)",
+            borderTopColor: isDark
+              ? "rgba(255,255,255,0.08)"
+              : "rgba(0,0,0,0.05)",
+          },
+        ]}
+      >
+        <View style={styles.bottomStats}>
+          <View style={styles.bottomStatItem}>
+            <Text style={[styles.bottomStatValue, { color: COLORS.success }]}>
+              {presentCount}
+            </Text>
+            <Text
+              style={[
+                styles.bottomStatLabel,
+                { color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280" },
+              ]}
+            >
+              Present
+            </Text>
+          </View>
+          <View style={styles.bottomStatItem}>
+            <Text style={[styles.bottomStatValue, { color: COLORS.danger }]}>
+              {absentCount}
+            </Text>
+            <Text
+              style={[
+                styles.bottomStatLabel,
+                { color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280" },
+              ]}
+            >
+              Absent
+            </Text>
+          </View>
+          <View style={styles.bottomStatItem}>
+            <Text style={[styles.bottomStatValue, { color: "#3B82F6" }]}>
+              0
+            </Text>
+            <Text
+              style={[
+                styles.bottomStatLabel,
+                { color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280" },
+              ]}
+            >
+              OD
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmitPress}
+        >
+          <Text style={styles.submitButtonText}>Submit</Text>
+          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      <LinearGradient
+        colors={[COLORS.gradientStart, COLORS.gradientMid, COLORS.gradientEnd]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Decorative orbs - same as home page */}
+      <View style={[styles.orb, styles.orb1]} />
+      <View style={[styles.orb, styles.orb2]} />
+      <View style={[styles.orb, styles.orb3]} />
+
+      {scanState === "HANDSHAKE" && renderHandshake()}
+      {scanState === "SCANNING" && renderScanning()}
+      {scanState === "SUBMITTING" && renderSubmitting()}
+      {scanState === "SUCCESS" && renderSuccess()}
+
+      {/* Modals */}
+      <InstructionsModal
+        visible={showInstructions}
+        onClose={handleInstructionsClose}
+        onDontShowAgain={handleDontShowAgain}
+      />
+
+      <HeadcountModal
+        visible={showHeadcount}
+        detectedCount={presentCount}
+        absentCount={absentCount}
+        onSubmit={handleConfirmSubmit}
+        onCancel={() => setShowHeadcount(false)}
+        onRescan={() => {
+          setShowHeadcount(false);
+          handleRescan();
+        }}
+      />
+
+      <OverrideModal
+        visible={showOverride}
+        className={previousAttendance?.className || ""}
+        takenAt={previousAttendance?.takenAt || ""}
+        onOverride={handleOverrideConfirm}
+        onCancel={handleOverrideCancel}
+      />
+
+      <ScanBlockedModal
+        visible={showBlocked}
+        reason={blockReason}
+        currentTime={new Date().toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })}
+        onClose={() => {
+          setShowBlocked(false);
+          navigation.goBack();
+        }}
+        onTakePreviousAttendance={() => {
+          setShowBlocked(false);
+          // Navigate to home and let user select a class for late attendance
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Main", params: { screen: "Home" } }],
+          });
+        }}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+
+  // Decorative orbs (same as home page)
+  orb: {
+    position: "absolute",
+    borderRadius: 200,
+  },
+  orb1: {
+    width: 300,
+    height: 300,
+    backgroundColor: "rgba(61, 220, 151, 0.15)",
+    top: -100,
+    right: -100,
+  },
+  orb2: {
+    width: 250,
+    height: 250,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    bottom: 200,
+    left: -80,
+  },
+  orb3: {
+    width: 180,
+    height: 180,
+    backgroundColor: "rgba(61, 220, 151, 0.08)",
+    bottom: 400,
+    right: -40,
+  },
+
+  // Handshake styles
+  handshakeContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+  },
+  handshakeVisual: {
+    width: 140,
+    height: 140,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 32,
+  },
+  outerRing: {
+    position: "absolute",
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 3,
+    borderColor: "transparent",
+    borderTopColor: COLORS.accent,
+    borderRightColor: "rgba(61, 220, 151, 0.3)",
+  },
+  ringSegment: {
+    position: "absolute",
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.accent,
+    top: -3,
+    left: "50%",
+    marginLeft: -5,
+  },
+  innerCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  handshakeTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  handshakeSubtitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: COLORS.textSecondary,
+    marginBottom: 32,
+  },
+  progressContainer: {
+    width: SCREEN_WIDTH - 80,
+    height: 4,
+    backgroundColor: COLORS.surface,
+    borderRadius: 2,
+    overflow: "hidden",
+    marginBottom: 16,
+  },
+  progressBar: {
+    height: "100%",
+    backgroundColor: COLORS.accent,
+    borderRadius: 2,
+  },
+  handshakeStatus: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: COLORS.textMuted,
+  },
+
+  // Success styles
+  successContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+  },
+  successCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 32,
+    shadowColor: COLORS.accent,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: 24,
+    letterSpacing: -0.5,
+  },
+  successStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  successStatItem: {
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  successStatValue: {
+    fontSize: 36,
+    fontWeight: "800",
+    color: COLORS.accent,
+  },
+  successStatLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
+  successDivider: {
+    width: 1,
+    height: 50,
+    backgroundColor: COLORS.border,
+  },
+  successSubtext: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: COLORS.textMuted,
+  },
+  submittingSpinner: {
+    width: 80,
+    height: 80,
+    backgroundColor: COLORS.surface,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+  },
+
+  // Scanning styles
+  scanningContainer: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
+  menuButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radarZone: {
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingBottom: 24,
+  },
+  listZone: {
+    flex: 1.5,
+    minHeight: "50%",
+    marginTop: 8,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: "hidden",
+  },
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    backgroundColor: "rgba(248, 250, 252, 0.98)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.05)",
+  },
+  bottomStats: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  bottomStatItem: {
+    alignItems: "center",
+    minWidth: 50,
+  },
+  bottomStatValue: {
+    fontSize: 20,
+    fontWeight: "800",
+  },
+  bottomStatLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginTop: 2,
+  },
+  submitButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: COLORS.gradientStart,
+    paddingHorizontal: 28,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: COLORS.gradientStart,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+});
+
+export default ScanScreen;

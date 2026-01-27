@@ -1,0 +1,292 @@
+/**
+ * StudentCard - Apple Zen Mode Premium Design
+ * Refined swipeable cards with elegant status colors
+ */
+
+import React, { useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Animated, 
+  PanResponder,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useTheme } from '../../../contexts';
+
+const SWIPE_THRESHOLD = 50;
+
+type StudentStatus = 'pending' | 'present' | 'absent';
+
+interface StudentCardProps {
+  name: string;
+  rollNo: string;
+  photoUrl?: string;
+  status: StudentStatus;
+  onStatusChange: (newStatus: StudentStatus) => void;
+}
+
+export const StudentCard: React.FC<StudentCardProps> = ({
+  name,
+  rollNo,
+  photoUrl,
+  status,
+  onStatusChange,
+}) => {
+  const { isDark } = useTheme();
+  const translateX = useRef(new Animated.Value(0)).current;
+  const isSwipingRef = useRef(false);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 2;
+        return isHorizontal && Math.abs(gestureState.dx) > 12;
+      },
+      onPanResponderGrant: () => {
+        isSwipingRef.current = true;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (isSwipingRef.current) {
+          translateX.setValue(gestureState.dx * 0.7);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        isSwipingRef.current = false;
+        
+        if (gestureState.dx > SWIPE_THRESHOLD) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          onStatusChange('present');
+        } else if (gestureState.dx < -SWIPE_THRESHOLD) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          onStatusChange('absent');
+        }
+        
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 8,
+          tension: 90,
+        }).start();
+      },
+      onPanResponderTerminate: () => {
+        isSwipingRef.current = false;
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 8,
+        }).start();
+      },
+    })
+  ).current;
+
+  // Apple Zen Mode status styles
+  const getStatusStyle = () => {
+    switch (status) {
+      case 'present':
+        return { 
+          bg: isDark ? '#1C2E1E' : '#E8F9EC', 
+          border: isDark ? 'rgba(52, 199, 89, 0.3)' : 'rgba(52, 199, 89, 0.25)', 
+          accent: '#34C759',
+          text: isDark ? '#34C759' : '#248A3D',
+          avatarBg: isDark ? '#1A2E1C' : '#FFFFFF',
+        };
+      case 'absent':
+        return { 
+          bg: isDark ? '#2E1C1C' : '#FEF0F0', 
+          border: isDark ? 'rgba(255, 107, 107, 0.25)' : 'rgba(255, 107, 107, 0.2)', 
+          accent: '#FF6B6B',
+          text: isDark ? '#FF6B6B' : '#D63031',
+          avatarBg: isDark ? '#2E1A1A' : '#FFFFFF',
+        };
+      default:
+        return { 
+          bg: isDark ? '#1C1C1E' : '#FFFFFF', 
+          border: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', 
+          accent: isDark ? '#636366' : '#8E8E93',
+          text: isDark ? '#636366' : '#8E8E93',
+          avatarBg: isDark ? '#2C2C2E' : '#F2F2F7',
+        };
+    }
+  };
+
+  const statusStyle = getStatusStyle();
+
+  // Text colors
+  const textColors = {
+    name: isDark ? '#FFFFFF' : '#1C1C1E',
+    rollNo: isDark ? 'rgba(255,255,255,0.5)' : '#8E8E93',
+  };
+
+  // Background reveal
+  const leftBgOpacity = translateX.interpolate({
+    inputRange: [-SWIPE_THRESHOLD, 0],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const rightBgOpacity = translateX.interpolate({
+    inputRange: [0, SWIPE_THRESHOLD],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const handleTap = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (status === 'pending') onStatusChange('present');
+    else if (status === 'present') onStatusChange('absent');
+    else onStatusChange('pending');
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Background reveal - Absent */}
+      <Animated.View style={[styles.bgReveal, styles.bgRevealLeft, { opacity: leftBgOpacity }]}>
+        <Ionicons name="close" size={18} color="#FFFFFF" />
+      </Animated.View>
+
+      {/* Background reveal - Present */}
+      <Animated.View style={[styles.bgReveal, styles.bgRevealRight, { opacity: rightBgOpacity }]}>
+        <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+      </Animated.View>
+
+      {/* Card */}
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={[
+          styles.card,
+          { 
+            backgroundColor: statusStyle.bg,
+            borderColor: statusStyle.border,
+            transform: [{ translateX }],
+          },
+        ]}
+      >
+        <TouchableOpacity 
+          style={styles.cardContent} 
+          onPress={handleTap}
+          activeOpacity={0.85}
+        >
+          {/* Avatar */}
+          <View style={[styles.avatar, { 
+            backgroundColor: statusStyle.avatarBg,
+            borderColor: statusStyle.accent,
+          }]}>
+            {photoUrl ? (
+              <Image source={{ uri: photoUrl }} style={styles.avatarImage} />
+            ) : (
+              <Text style={[styles.avatarText, { color: statusStyle.text }]}>
+                {getInitials(name)}
+              </Text>
+            )}
+          </View>
+
+          {/* Info */}
+          <View style={styles.info}>
+            <Text style={[styles.name, { color: textColors.name }]} numberOfLines={1}>{name}</Text>
+            <Text style={[styles.rollNo, { color: textColors.rollNo }]}>{rollNo}</Text>
+          </View>
+
+          {/* Status Indicator */}
+          <View style={[styles.statusIndicator, { backgroundColor: statusStyle.accent }]}>
+            <Ionicons 
+              name={status === 'present' ? 'checkmark' : status === 'absent' ? 'close' : 'remove'} 
+              size={10} 
+              color="#FFFFFF" 
+            />
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    marginHorizontal: 12,
+    marginBottom: 6,
+    height: 52,
+  },
+  bgReveal: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+  },
+  bgRevealLeft: {
+    right: 0,
+    backgroundColor: '#FF6B6B',
+  },
+  bgRevealRight: {
+    left: 0,
+    backgroundColor: '#34C759',
+  },
+  card: {
+    borderRadius: 14,
+    borderWidth: 1,
+    height: '100%',
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    height: '100%',
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  info: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  rollNo: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  statusIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+export default StudentCard;

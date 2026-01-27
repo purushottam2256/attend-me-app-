@@ -1,0 +1,1 @@
+export { MyClassHubScreen } from './MyClassHubScreen';
