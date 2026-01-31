@@ -93,6 +93,7 @@ CREATE TABLE public.profiles (
     mobile TEXT,
     is_biometric_enabled BOOLEAN DEFAULT FALSE,
     device_token TEXT, -- For FCM push notifications
+    avatar_url TEXT, -- Profile picture URL
     is_on_leave BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -1318,8 +1319,72 @@ INSERT INTO public.departments (code, name) VALUES
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================
--- NOTES FOR FREE TIER USAGE
+-- 17. SPECIAL HOLIDAYS (from migration)
 -- ============================================================================
+create table if not exists public.holidays (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  date date not null,
+  type text check (type in ('holiday', 'event', 'exam')) default 'holiday',
+  description text,
+  created_at timestamptz default now()
+);
+
+-- Enable RLS
+alter table public.holidays enable row level security;
+
+-- Create Policy (Read Only for everyone)
+create policy "Enable read access for all users" on public.holidays
+  for select using (true);
+
+-- Seed Data
+insert into public.holidays (title, date, type, description) values 
+  ('Republic Day', '2026-01-26', 'holiday', 'National Holiday'), 
+  ('Annual Tech Fest', '2026-03-15', 'event', 'College wide technical symposium'), 
+  ('Mid Semester Exams', '2026-02-10', 'exam', 'Phase 1 internal assessments');
+
+-- ============================================================================
+-- 18. LEAVES AND ISSUES (from migration)
+-- ============================================================================
+
+-- LEAVES TABLE
+create table if not exists public.leaves (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) not null,
+  reason text not null,
+  start_date timestamptz not null,
+  end_date timestamptz not null,
+  leave_type text check (leave_type in ('full_day', 'half_day')) default 'full_day',
+  status text check (status in ('pending', 'approved', 'rejected')) default 'pending',
+  created_at timestamptz default now()
+);
+
+-- ISSUES/REPORTS TABLE
+create table if not exists public.issues (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) not null,
+  description text not null,
+  has_screenshot boolean default false,
+  status text check (status in ('open', 'investigating', 'resolved')) default 'open',
+  created_at timestamptz default now()
+);
+
+-- Enable RLS
+alter table public.leaves enable row level security;
+alter table public.issues enable row level security;
+
+-- Policies (Users can create and see their own leaves/issues)
+create policy "Users can insert their own leaves" on public.leaves
+  for insert with check (auth.uid() = user_id);
+
+create policy "Users can view their own leaves" on public.leaves
+  for select using (auth.uid() = user_id);
+
+create policy "Users can insert their own issues" on public.issues
+  for insert with check (auth.uid() = user_id);
+
+create policy "Users can view their own issues" on public.issues
+  for select using (auth.uid() = user_id);
 
 /*
 FREE TIER LIMITATIONS & WORKAROUNDS:

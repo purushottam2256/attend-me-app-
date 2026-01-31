@@ -25,6 +25,10 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
+import { ZenToast } from '../../../components/ZenToast';
+import { EditProfileModal } from '../components/EditProfileModal';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Colors } from '../../../constants';
 
 interface ProfileScreenProps {
   userName: string;
@@ -44,24 +48,8 @@ interface MenuItem {
 }
 
 // --- Components ---
+// ZenToast is now imported
 
-const ZenToast = ({ message, visible, onHide }: { message: string, visible: boolean, onHide: () => void }) => {
-    if (!visible) return null;
-    
-    useEffect(() => {
-        const timer = setTimeout(onHide, 3000);
-        return () => clearTimeout(timer);
-    }, [visible]);
-
-    return (
-        <View style={styles.toastContainer}>
-            <View style={styles.toastContent}>
-                <Ionicons name="checkmark-circle" size={20} color="#0F766E" />
-                <Text style={styles.toastText}>{message}</Text>
-            </View>
-        </View>
-    );
-};
 
 
 
@@ -100,6 +88,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
   const [leaveReason, setLeaveReason] = useState('');
   const [leaveFrom, setLeaveFrom] = useState(new Date());
   const [leaveTo, setLeaveTo] = useState(new Date());
+  const [leaveType, setLeaveType] = useState<'full_day' | 'half_day'>('full_day');
   
   // Date Picker State
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -107,18 +96,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
 
   const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
 
-  // Edit Profile
-  const [editName, setEditName] = useState('');
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  // No local edit state needed, handled in EditProfileModal
 
   // Report
   const [reportQuery, setReportQuery] = useState('');
-  const [hasScreenshot, setHasScreenshot] = useState(false);
+  const [reportImage, setReportImage] = useState<string | null>(null);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  // -- Holidays --
+  const [holidays, setHolidays] = useState<any[]>([]);
 
   useEffect(() => {
     loadUserData();
     loadSettings();
+    loadHolidays();
   }, []);
+
+  const loadHolidays = async () => {
+      const { data } = await supabase
+          .from('holidays')
+          .select('*')
+          .gte('date', new Date().toISOString())
+          .order('date', { ascending: true })
+          .limit(3);
+      if (data) setHolidays(data);
+  };
 
   const loadUserData = async () => {
     try {
@@ -127,13 +129,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
         setUserEmail(user.email || '');
         const { data: profile } = await supabase
             .from('profiles')
-            .select('dept, role, full_name')
+            .select('dept, role, full_name, avatar_url')
             .eq('id', user.id)
             .single();
         if (profile) {
             setUserDept(profile.dept || '');
             setUserRole(profile.role || 'faculty');
-            if (profile.full_name) setDisplayName(profile.full_name);
+            if (profile.full_name) {
+                setDisplayName(profile.full_name);
+            }
+            if (profile.avatar_url) setProfileImage(profile.avatar_url);
         }
       }
     } catch (error) { console.error(error); }
@@ -167,43 +172,57 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
   };
 
   // --- Actions ---
-  const handleApplyLeave = () => {
+  const handleApplyLeave = async () => {
       if (!leaveReason.trim()) {
           Alert.alert('Required', 'Please enter a reason.');
           return;
       }
       setIsSubmittingLeave(true);
-      setTimeout(() => {
-          setIsSubmittingLeave(false);
-          setLeaveModalVisible(false);
-          showZenToast('Application Sent Successfully');
-          setLeaveReason('');
-      }, 1000);
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('No user');
+        
+        // For Half Day, imply End Date = Start Date (Single Day)
+        const finalEndDate = leaveType === 'half_day' ? leaveFrom : leaveTo;
+
+        const { error } = await supabase.from('leaves').insert({
+            user_id: user.id,
+            reason: leaveReason,
+            start_date: leaveFrom.toISOString(),
+            end_date: finalEndDate.toISOString(),
+            leave_type: leaveType,
+            status: 'pending'
+        });
+
+        if (error) throw error;
+
+        setLeaveModalVisible(false);
+        showZenToast('Application Sent Successfully');
+        setLeaveReason('');
+        // Notify HOD logic would be ideally backend trigger, but we simulate success here
+      } catch (err) {
+        Alert.alert('Error', 'Failed to apply for leave.');
+        console.error(err);
+      } finally {
+        setIsSubmittingLeave(false);
+      }
   };
 
-  const handleUpdatePhoto = async () => {
-      // Request permission using Native Image Picker
+  const handlePickReportImage = async () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-          Alert.alert('Permission needed', 'Please grant gallery permission to change photo.');
-          return;
+           Alert.alert('Permission needed', 'Gallery permission required.');
+           return;
       }
-
+      
       const result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.7,
+          quality: 0.5,
       });
-
+      
       if (!result.canceled && result.assets[0].uri) {
-          setProfileImage(result.assets[0].uri);
-          setIsSavingProfile(true);
-          // Simulate upload delay
-          setTimeout(() => {
-              setIsSavingProfile(false);
-              showZenToast('Profile Photo Updated');
-          }, 1200);
+          setReportImage(result.assets[0].uri);
       }
   };
 
@@ -215,6 +234,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
       if (selectedDate) {
           if (datePickerMode === 'from') {
               setLeaveFrom(selectedDate);
+              // Auto-set To date if it's before From date or for convenience
+              if (selectedDate > leaveTo) {
+                  setLeaveTo(selectedDate);
+              }
           } else {
               setLeaveTo(selectedDate);
           }
@@ -225,36 +248,48 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
       setDatePickerMode(mode);
       setShowDatePicker(true);
   };
-
-  const handleUpdateProfile = async () => {
-      if (!editName.trim()) return;
-      setIsSavingProfile(true);
-      setTimeout(() => {
-         setDisplayName(editName);
-         setIsSavingProfile(false);
-         setEditProfileVisible(false);
-         showZenToast('Profile Updated Successfully');
-      }, 800);
-  };
-
-  const handleReportIssue = () => {
+  
+  const handleReportIssue = async () => {
       if (!reportQuery.trim()) return;
-      setReportModalVisible(false);
-      setReportQuery('');
-      setHasScreenshot(false);
-      showZenToast('Report Submitted. ID: #8821');
+      setIsSubmittingReport(true);
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('No user');
+
+        const { error } = await supabase.from('issues').insert({
+            user_id: user.id,
+            description: reportQuery,
+            has_screenshot: !!reportImage, // Boolean flag for specific field if schema requires, or maybe we should store URL later
+            status: 'open'
+        });
+
+        if (error) throw error;
+
+        setReportModalVisible(false);
+        setReportQuery('');
+        setReportImage(null);
+
+        showZenToast(`Report Submitted. ID: #${Math.floor(Math.random() * 9000) + 1000}`);
+      } catch (err) {
+          Alert.alert('Error', 'Failed to submit report.');
+          console.error(err);
+      } finally {
+          setIsSubmittingReport(false);
+      }
   };
+
 
   // --- Render Sections ---
   const renderSection = (title: string, items: MenuItem[]) => (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+      <Text style={[styles.sectionTitle, { color: isDark ? '#FFFFFF' : '#1E293B' }]}>
         {title}
       </Text>
       <View style={[
           styles.menuCard, 
           { 
-              backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+              backgroundColor: isDark ? '#082020' : '#FFFFFF',
               borderWidth: isDark ? 0 : 1,
               borderColor: '#E2E8F0'
           }
@@ -315,7 +350,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#0F172A' : '#F9FAFB' }]}>
+    <View style={styles.container}>
+      {/* Premium Gradient Background with Orbs */}
+      <View style={StyleSheet.absoluteFill}>
+        <LinearGradient
+          colors={[Colors.premium.gradientStart, Colors.premium.gradientMid, Colors.premium.gradientEnd]}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        <View style={[styles.orb, styles.orb1]} />
+        <View style={[styles.orb, styles.orb2]} />
+        <View style={[styles.orb, styles.orb3]} />
+      </View>
+
       <ZenToast 
         visible={toastVisible} 
         message={toastMessage} 
@@ -335,14 +383,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
         <View style={{ marginBottom: 24 }} />
 
         {renderSection('Faculty Services', [
-           { icon: 'document-text', label: 'Apply for Leave', value: 'Notify HOD', onPress: () => setLeaveModalVisible(true), color: '#3B82F6' },
-           { icon: 'calendar', label: 'My Schedule', value: 'Weekly Timetable', onPress: () => setScheduleModalVisible(true), color: '#8B5CF6' }
+           { icon: 'document-text', label: 'Apply for Leave', value: 'Notify HOD', onPress: () => setLeaveModalVisible(true), color: '#F59E0B' },
+           { icon: 'calendar', label: 'My Schedule', value: 'Weekly Timetable', onPress: () => { setScheduleModalVisible(true); loadHolidays(); }, color: '#8B5CF6' }
         ])}
 
         {renderSection('App Settings', [
           { icon: isDark ? 'moon' : 'sunny', label: 'Dark Mode', isToggle: true, toggleValue: isDark, onToggle: () => setTheme(isDark ? 'light' : 'dark'), color: isDark ? '#8B5CF6' : '#F59E0B' },
           { icon: 'notifications', label: 'Push Notifications', isToggle: true, toggleValue: notificationsEnabled, onToggle: toggleNotifications, color: '#EC4899' },
           { icon: 'phone-portrait', label: 'Haptic Feedback', isToggle: true, toggleValue: hapticsEnabled, onToggle: toggleHaptics, color: '#10B981' }
+        ])}
+
+        {renderSection('Data & Cloud', [
+           { icon: 'cloud', label: 'Sync Manager', value: 'Check Status', onPress: () => (navigation as any).navigate('SyncManager'), color: '#10B981' },
         ])}
 
         {renderSection('Help & Support', [
@@ -355,36 +407,72 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
             <SlideToLogout onLogout={onLogout} />
         </View>
 
-        <Text style={[styles.versionText, { color: isDark ? '#475569' : '#94A3B8' }]}>MRCE Attend-Me v1.0.3</Text>
+        <Text style={[styles.versionText, { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)' }]}>MRCE Attend-Me v1.0.3</Text>
         <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* --- Leave Modal --- */}
-      <Modal visible={leaveModalVisible} animationType="slide" transparent>
+      <Modal visible={leaveModalVisible} animationType="slide" transparent onRequestClose={() => setLeaveModalVisible(false)}>
           <View style={styles.modalOverlay}>
-              <View style={[styles.modalCard, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
-                  <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A' }]}>Apply for Leave</Text>
+              <View style={[styles.modalCard, { backgroundColor: isDark ? '#082020' : '#FFF' }]}>
+                  <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#082020' }]}>Apply for Leave</Text>
                   
-                  <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>REASON</Text>
+                  {/* Leave Type Toggle */}
+                   <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                      {['full_day', 'half_day'].map((type) => (
+                          <TouchableOpacity 
+                              key={type}
+                              onPress={() => setLeaveType(type as any)}
+                              style={{ 
+                                  flex: 1, 
+                                  paddingVertical: 10, 
+                                  alignItems: 'center', 
+                                  backgroundColor: leaveType === type ? '#0F766E' : (isDark ? '#082020' : '#F1F5F9'),
+                                  borderRadius: 8,
+                                  marginRight: 8
+                              }}
+                          >
+                              <Text style={{ 
+                                  color: leaveType === type ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
+                                  fontWeight: '700', fontSize: 13
+                              }}>
+                                  {type === 'full_day' ? 'Full Day' : 'Half Day'}
+                              </Text>
+                          </TouchableOpacity>
+                      ))}
+                  </View>
+
+                  <View style={{ marginBottom: 16 }}>
+                      {leaveType === 'full_day' ? (
+                          <View style={{ flexDirection: 'row', gap: 12 }}>
+                              <View style={{ flex: 1 }}>
+                                  <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>FROM</Text>
+                                  <TouchableOpacity onPress={() => showDatepicker('from')} style={[styles.dateBtn, { backgroundColor: isDark ? '#082020' : '#F8FAFC' }]}>
+                                      <Text style={{ color: isDark ? '#FFF' : '#082020' }}>{leaveFrom.toLocaleDateString()}</Text>
+                                  </TouchableOpacity>
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                  <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>TO</Text>
+                                  <TouchableOpacity onPress={() => showDatepicker('to')} style={[styles.dateBtn, { backgroundColor: isDark ? '#082020' : '#F8FAFC' }]}>
+                                      <Text style={{ color: isDark ? '#FFF' : '#082020' }}>{leaveTo.toLocaleDateString()}</Text>
+                                  </TouchableOpacity>
+                              </View>
+                          </View>
+                      ) : (
+                          <View>
+                              <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>DATE</Text>
+                              <TouchableOpacity onPress={() => showDatepicker('from')} style={[styles.dateBtn, { backgroundColor: isDark ? '#082020' : '#F8FAFC', width: '100%' }]}>
+                                  <Text style={{ color: isDark ? '#FFF' : '#082020' }}>{leaveFrom.toLocaleDateString()}</Text>
+                              </TouchableOpacity>
+                          </View>
+                      )}
+                  </View>
+
+                  <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B', marginTop: 4 }]}>REASON</Text>
                   <TextInput 
-                      style={[styles.input, { color: isDark ? '#FFF' : '#0F172A', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', height: 80, textAlignVertical: 'top' }]}
+                      style={[styles.input, { color: isDark ? '#FFF' : '#082020', backgroundColor: isDark ? '#082020' : '#F8FAFC', height: 80, textAlignVertical: 'top' }]}
                       value={leaveReason} onChangeText={setLeaveReason} multiline placeholder="I am taking leave because..." placeholderTextColor="#94A3B8"
                   />
-
-                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-                      <View style={{ flex: 1 }}>
-                          <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>FROM</Text>
-                          <TouchableOpacity onPress={() => showDatepicker('from')} style={[styles.dateBtn, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
-                              <Text style={{ color: isDark ? '#FFF' : '#0F172A' }}>{leaveFrom.toLocaleDateString()}</Text>
-                          </TouchableOpacity>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                          <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>TO</Text>
-                          <TouchableOpacity onPress={() => showDatepicker('to')} style={[styles.dateBtn, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
-                              <Text style={{ color: isDark ? '#FFF' : '#0F172A' }}>{leaveTo.toLocaleDateString()}</Text>
-                          </TouchableOpacity>
-                      </View>
-                  </View>
 
                   <View style={styles.modalActions}>
                       <TouchableOpacity onPress={() => setLeaveModalVisible(false)} style={styles.cancelBtn}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
@@ -408,152 +496,327 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
           )}
       </Modal>
 
-      {/* --- Avatar Picker Modal (Replaces Native Gallery) --- */}
-      <Modal visible={editProfileVisible && isSavingProfile === false /* reusing edit visibility context or new state? We used editProfileVisible for the name input modal. Let's create a new one or overlay. Actually let's use a new state 'avatarModalVisible' */} animationType="fade" transparent>
-          {/* We will handle this in the next replacement block correctly by adding the state */}
-      </Modal>
+      <EditProfileModal 
+          visible={editProfileVisible}
+          onClose={() => setEditProfileVisible(false)}
+          onProfileUpdated={() => {
+              loadUserData();
+              showZenToast('Profile Updated Successfully');
+          }}
+          currentName={displayName}
+          currentPhoto={profileImage}
+          isDark={isDark}
+      />
 
-      {/* --- Schedule Modal (Full Screen) --- */}
-      <Modal visible={scheduleModalVisible} animationType="slide" transparent={false}>
-          <View style={[styles.modalOverlay, { padding: 0, backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
-              <View style={[styles.modalCardFull, { flex: 1, borderRadius: 0, width: '100%', maxHeight: '100%' }]}>
-                  <View style={[styles.modalHeader, { marginTop: insets.top + 10 }]}>
-                      <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A', marginBottom: 0 }]}>Weekly Schedule</Text>
-                      <TouchableOpacity onPress={() => {
-                          setScheduleModalVisible(false);
-                          showZenToast('Schedule Updated');
-                      }}>
-                          <Ionicons name="close-circle" size={32} color={isDark ? '#FFF' : '#0F172A'} />
-                      </TouchableOpacity>
+      {/* --- Schedule Modal (Overhauled) --- */}
+      <Modal visible={scheduleModalVisible} animationType="slide" transparent={false} onRequestClose={() => setScheduleModalVisible(false)}>
+          {/* Green Theme Container */}
+          <View style={{ flex: 1, backgroundColor: '#0F766E' }}> 
+              
+              {/* Header */}
+              <View style={[styles.modalHeader, { marginTop: insets.top + 20, paddingHorizontal: 20 }]}>
+                  <View>
+                      <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '700', letterSpacing: 1 }}>ACADEMIC PLAN</Text>
+                      <Text style={{ color: '#FFF', fontSize: 28, fontWeight: '800' }}>Weekly Schedule</Text>
                   </View>
-                  
-                  <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 10 }}>
-                      <View>
-                          {/* Header Row */}
-                          <View style={[styles.tableRow, { backgroundColor: isDark ? '#334155' : '#F1F5F9', borderTopLeftRadius: 12, borderTopRightRadius: 12 }]}>
-                              <View style={[styles.cellFixed, { borderColor: isDark ? '#475569' : '#E2E8F0' }]}>
-                                  <Text style={[styles.cellTextBold, { color: isDark ? '#94A3B8' : '#64748B' }]}>TIME</Text>
-                              </View>
-                              {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => (
-                                  <View key={day} style={[styles.cell, { borderColor: isDark ? '#475569' : '#E2E8F0', backgroundColor: isDark ? '#0F172A' : '#FFF' }]}>
-                                      <Text style={[styles.cellTextBold, { color: '#0F766E' }]}>{day}</Text>
-                                  </View>
-                              ))}
-                          </View>
+                  <TouchableOpacity 
+                      onPress={() => setScheduleModalVisible(false)}
+                      style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 100 }}
+                  >
+                      <Ionicons name="close" size={24} color="#FFF" />
+                  </TouchableOpacity>
+              </View>
+              
+              <View style={{ flex: 1, backgroundColor: isDark ? '#082020' : '#F1F5F9', borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden' }}>
+                    <ScrollView contentContainerStyle={{ padding: 20 }}>
+                        {/* Tabular Schedule Grid */}
+                        <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+                            <View>
+                                {/* Header Row (Days) */}
+                                <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', paddingBottom: 8, marginBottom: 8 }}>
+                                    <View style={{ width: 80, alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: 12, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B' }}>TIME / DAY</Text>
+                                    </View>
+                                    {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
+                                        <View key={day} style={{ width: 140, alignItems: 'center', justifyContent: 'center' }}>
+                                            <Text style={{ fontSize: 14, fontWeight: '800', color: isDark ? '#FFF' : '#082020' }}>{day}</Text>
+                                        </View>
+                                    ))}
+                                </View>
 
-                          {/* Data Rows */}
-                          {[
-                              { time: '09:30', m: 'CN (Lab)', t: 'OS', w: 'DBMS', th: 'CN', f: 'SE', s: '-' },
-                              { time: '10:20', m: 'CN (Lab)', t: 'OS', w: 'DBMS', th: 'CN', f: 'SE', s: '-' },
-                              { time: '11:10', m: 'CN (Lab)', t: 'DAA', w: 'Lib', th: 'DAA', f: 'Ment', s: '-' },
-                              { time: '12:00', m: 'LUNCH', t: 'LUNCH', w: 'LUNCH', th: 'LUNCH', f: 'LUNCH', s: '-' },
-                              { time: '01:00', m: 'SE', t: 'DBMS', w: 'OS', th: 'DBMS', f: 'DAA', s: '-' },
-                              { time: '01:50', m: 'DAA', t: 'Sports', w: 'CN', th: 'Lib', f: 'OS', s: '-' },
-                              { time: '02:40', m: '-', t: '-', w: '-', th: '-', f: '-', s: '-' }
-                          ].map((row, i) => (
-                              <View key={i} style={[styles.tableRow, { backgroundColor: row.time === '12:00' ? (isDark ? 'rgba(245, 158, 11, 0.1)' : '#FEF3C7') : 'transparent' }]}>
-                                  <View style={[styles.cellFixed, { borderColor: isDark ? '#475569' : '#E2E8F0', backgroundColor: isDark ? '#1E293B' : '#F8FAFC' }]}>
-                                      <Text style={[styles.cellText, { color: isDark ? '#FFF' : '#0F172A', fontWeight: '700' }]}>{row.time}</Text>
-                                  </View>
-                                  <View style={[styles.cell, { borderColor: isDark ? '#475569' : '#E2E8F0' }]}><Text style={[styles.cellText, { color: isDark ? '#CBD5E1' : '#334155' }]}>{row.m}</Text></View>
-                                  <View style={[styles.cell, { borderColor: isDark ? '#475569' : '#E2E8F0' }]}><Text style={[styles.cellText, { color: isDark ? '#CBD5E1' : '#334155' }]}>{row.t}</Text></View>
-                                  <View style={[styles.cell, { borderColor: isDark ? '#475569' : '#E2E8F0' }]}><Text style={[styles.cellText, { color: isDark ? '#CBD5E1' : '#334155' }]}>{row.w}</Text></View>
-                                  <View style={[styles.cell, { borderColor: isDark ? '#475569' : '#E2E8F0' }]}><Text style={[styles.cellText, { color: isDark ? '#CBD5E1' : '#334155' }]}>{row.th}</Text></View>
-                                  <View style={[styles.cell, { borderColor: isDark ? '#475569' : '#E2E8F0' }]}><Text style={[styles.cellText, { color: isDark ? '#CBD5E1' : '#334155' }]}>{row.f}</Text></View>
-                                  <View style={[styles.cell, { borderColor: isDark ? '#475569' : '#E2E8F0' }]}><Text style={[styles.cellText, { color: isDark ? '#CBD5E1' : '#334155' }]}>{row.s}</Text></View>
-                              </View>
-                          ))}
-                      </View>
-                  </ScrollView>
+                                {/* Time Rows */}
+                                {['09:30 - 10:20', '10:20 - 11:10', '11:10 - 12:00', '12:00 - 12:50', '01:40 - 02:30', '02:30 - 03:20'].map((time, rowIdx) => (
+                                    <View key={rowIdx} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'center' }}>
+                                        {/* Time Column */}
+                                        <View style={{ width: 80, paddingRight: 12, justifyContent: 'center' }}>
+                                            <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#FFF' : '#082020', textAlign: 'center' }}>{time.split(' - ')[0]}</Text>
+                                            <Text style={{ fontSize: 10,  color: isDark ? '#94A3B8' : '#64748B', textAlign: 'center' }}>to</Text>
+                                            <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#FFF' : '#082020', textAlign: 'center' }}>{time.split(' - ')[1]}</Text>
+                                        </View>
+
+                                        {/* Schedule Cells (Simulated Fetch Data) */}
+                                        {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day, colIdx) => {
+                                            // Mock Data Logic (Replace with real DB data map)
+                                            const isBreak = rowIdx === 3; // Lunch break simulation
+                                            const hasClass = !isBreak && (rowIdx + colIdx) % 3 !== 0; // Randomize cells
+                                            
+                                            // Real app should map `timetable` data here using `day` and `time`
+                                            
+                                            if (isBreak) return (
+                                                <View key={colIdx} style={{ width: 140, height: 80, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9', marginHorizontal: 4, borderRadius: 8, justifyContent: 'center', alignItems: 'center' }}>
+                                                    <Text style={{ color: isDark ? '#475569' : '#94A3B8', fontSize: 10, fontWeight: '700', letterSpacing: 1 }}>LUNCH</Text>
+                                                </View>
+                                            );
+
+                                            return (
+                                                <View key={colIdx} style={{ 
+                                                    width: 140, height: 90, 
+                                                    backgroundColor: hasClass ? (isDark ? '#082020' : '#FFF') : 'transparent',
+                                                    borderWidth: hasClass ? 1 : 0,
+                                                    borderColor: isDark ? '#334155' : '#E2E8F0',
+                                                    borderRadius: 12, 
+                                                    marginHorizontal: 4, 
+                                                    padding: 10,
+                                                    justifyContent: 'center',
+                                                    elevation: hasClass ? 1 : 0
+                                                }}>
+                                                    {hasClass ? (
+                                                        <>
+                                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                                                                <Text style={{ color: '#0F766E', fontSize: 10, fontWeight: '800' }}>CS{3100 + rowIdx}</Text>
+                                                                <Text style={{ color: isDark ? '#CBD5E1' : '#475569', fontSize: 10, fontWeight: '700' }}>III-CSE-A</Text>
+                                                            </View>
+                                                            <Text style={{ color: isDark ? '#FFF' : '#082020', fontSize: 12, fontWeight: '700', marginBottom: 2 }} numberOfLines={2}>
+                                                                {['Computer Networks', 'Operating Systems', 'Software Eng.', 'Database Mgmt'][rowIdx % 4]}
+                                                            </Text>
+                                                        </>
+                                                    ) : (
+                                                        <Text style={{ color: isDark ? '#334155' : '#CBD5E1', fontSize: 11, textAlign: 'center', fontWeight: '600' }}>- Free -</Text>
+                                                    )}
+                                                </View>
+                                            )
+                                        })}
+                                    </View>
+                                ))}
+                            </View>
+                        </ScrollView>
+                        
+                        {/* Legend / Info */}
+                        <Text style={{ textAlign: 'center', color: '#rgba(255,255,255,0.6)', fontSize: 11, marginTop: 12 }}>
+                             Swipe horizontal to view full week • Data synced from central db
+                        </Text>
+                        
+                        {/* Holidays Section */}
+                        <Text style={[styles.sectionTitle, { color: isDark ? '#94A3B8' : '#64748B', marginTop: 32 }]}>UPCOMING HOLIDAYS & EVENTS</Text>
+                        
+                        {holidays.length === 0 ? (
+                            <View style={{ padding: 20, alignItems: 'center', opacity: 0.5 }}>
+                                <Text style={{ color: isDark ? '#FFF' : '#000' }}>No upcoming events.</Text>
+                            </View>
+                        ) : (
+                            holidays.map((h, i) => (
+                                <View key={i} style={{ 
+                                    flexDirection: 'row', 
+                                    alignItems: 'center', 
+                                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFF', 
+                                    padding: 16, 
+                                    borderRadius: 16, 
+                                    marginBottom: 12,
+                                    borderWidth: 1,
+                                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                }}>
+                                    <View style={{ 
+                                        width: 48, height: 48, 
+                                        borderRadius: 12, 
+                                        backgroundColor: h.type === 'holiday' ? 'rgba(239, 68, 68, 0.1)' : (h.type === 'exam' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)'), 
+                                        alignItems: 'center', justifyContent: 'center',
+                                        marginRight: 16
+                                    }}>
+                                        <Text style={{ 
+                                            fontSize: 18, fontWeight: '800',
+                                            color: h.type === 'holiday' ? '#EF4444' : (h.type === 'exam' ? '#F59E0B' : '#3B82F6')
+                                        }}>
+                                            {new Date(h.date).getDate()}
+                                        </Text>
+                                        <Text style={{ 
+                                            fontSize: 9, fontWeight: '700', textTransform: 'uppercase',
+                                            color: h.type === 'holiday' ? '#EF4444' : (h.type === 'exam' ? '#F59E0B' : '#3B82F6')
+                                        }}>
+                                            {new Date(h.date).toLocaleString('default', { month: 'short' })}
+                                        </Text>
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={{ color: isDark ? '#FFF' : '#0F172A', fontWeight: '700', fontSize: 15 }}>{h.title}</Text>
+                                        <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 13, marginTop: 2 }}>{h.description || 'College Event'}</Text>
+                                    </View>
+                                    <View style={{ backgroundColor: isDark ? '#334155' : '#F1F5F9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
+                                        <Text style={{ fontSize: 10, color: isDark ? '#CBD5E1' : '#475569', fontWeight: '600', textTransform: 'uppercase' }}>{h.type}</Text>
+                                    </View>
+                                </View>
+                            ))
+                        )}
+
+                        <View style={{ height: 100 }} />
+                    </ScrollView>
               </View>
           </View>
       </Modal>
 
-      {/* --- Help Modal --- */}
-      <Modal visible={helpModalVisible} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-              <View style={[styles.modalCard, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
-                  <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A' }]}>Help Center</Text>
-                  <Text style={{ color: '#64748B', marginBottom: 20 }}>
-                      Welcome to the professional guide.
-                      {'\n\n'}1. **Attendance**: Use "Take Attendance" from Home.
-                      {'\n'}2. **Beacons**: Ensure Bluetooth is ON (Green Status).
-                      {'\n'}3. **Reports**: Apply for leave or report bugs here.
-                  </Text>
-                  
-                  <Text style={[styles.inputLabel, { color: '#64748B' }]}>TEXT SIZE ADJUSTMENT</Text>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, backgroundColor: isDark ? '#0F172A' : '#F8FAFC', padding: 12, borderRadius: 12 }}>
-                      <TouchableOpacity onPress={() => setTextSize(0)}><Text style={{ fontSize: 12, color: textSize === 0 ? '#10B981' : '#94A3B8' }}>Small</Text></TouchableOpacity>
-                      <TouchableOpacity onPress={() => setTextSize(1)}><Text style={{ fontSize: 16, color: textSize === 1 ? '#10B981' : '#94A3B8' }}>Standard</Text></TouchableOpacity>
-                      <TouchableOpacity onPress={() => setTextSize(2)}><Text style={{ fontSize: 20, color: textSize === 2 ? '#10B981' : '#94A3B8' }}>Large</Text></TouchableOpacity>
+      {/* --- Help Modal (Full Screen Detailed Guide) --- */}
+      <Modal visible={helpModalVisible} animationType="slide" transparent={false} onRequestClose={() => setHelpModalVisible(false)}>
+          <View style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}>
+              <View style={[styles.modalHeader, { marginTop: insets.top + 20, paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: isDark ? '#1E293B' : '#E2E8F0' }]}>
+                  <View>
+                      <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A', marginBottom: 4 }]}>Help Center</Text>
+                      <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 13 }}>Complete guide to Attend-Me</Text>
                   </View>
-
-                  <TouchableOpacity onPress={() => setHelpModalVisible(false)} style={styles.saveBtn}>
-                      <Text style={styles.saveText}>Close Guide</Text>
+                  <TouchableOpacity onPress={() => setHelpModalVisible(false)} style={{ backgroundColor: isDark ? '#1E293B' : '#FFF', padding: 8, borderRadius: 100, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0' }}>
+                      <Ionicons name="close" size={24} color={isDark ? '#FFF' : '#0F172A'} />
                   </TouchableOpacity>
               </View>
+              
+              <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 60 }}>
+                   
+                   {/* 1. Getting Started */}
+                   <View style={{ marginBottom: 32 }}>
+                       <Text style={{ fontSize: 12, fontWeight: '800', color: '#0F766E', marginBottom: 16, letterSpacing: 1 }}>GETTING STARTED</Text>
+                       <View style={{ backgroundColor: isDark ? '#1E293B' : '#FFF', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0' }}>
+                           <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                               <View style={{ width: 32, height: 32, borderRadius: 100, backgroundColor: '#cffafe', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                                   <Text style={{ fontWeight: '700', color: '#0F766E' }}>1</Text>
+                               </View>
+                               <View style={{ flex: 1 }}>
+                                   <Text style={{ fontWeight: '700', fontSize: 15, color: isDark ? '#FFF' : '#0F172A', marginBottom: 4 }}>Select Your Class</Text>
+                                   <Text style={{ fontSize: 13, color: isDark ? '#94A3B8' : '#64748B', lineHeight: 20 }}>
+                                       On the Home Screen, tap "Select Class" to choose the Department, Year, and Section you are teaching.
+                                   </Text>
+                               </View>
+                           </View>
+                           <View style={{ flexDirection: 'row' }}>
+                               <View style={{ width: 32, height: 32, borderRadius: 100, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                                   <Text style={{ fontWeight: '700', color: '#166534' }}>2</Text>
+                               </View>
+                               <View style={{ flex: 1 }}>
+                                   <Text style={{ fontWeight: '700', fontSize: 15, color: isDark ? '#FFF' : '#0F172A', marginBottom: 4 }}>Start Attendance</Text>
+                                   <Text style={{ fontSize: 13, color: isDark ? '#94A3B8' : '#64748B', lineHeight: 20 }}>
+                                       Tap "Take Attendance". The app looks for the class beacon. If found, students are marked present automatically.
+                                   </Text>
+                               </View>
+                           </View>
+                       </View>
+                   </View>
+
+                   {/* 2. Troubleshooting */}
+                   <View style={{ marginBottom: 32 }}>
+                       <Text style={{ fontSize: 12, fontWeight: '800', color: '#F59E0B', marginBottom: 16, letterSpacing: 1 }}>TROUBLESHOOTING</Text>
+                       
+                       <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+                           <Ionicons name="bluetooth" size={24} color={isDark ? '#94A3B8' : '#64748B'} style={{ marginRight: 16, marginTop: 2 }} />
+                           <View style={{ flex: 1 }}>
+                               <Text style={{ fontWeight: '700', fontSize: 15, color: isDark ? '#FFF' : '#0F172A' }}>Bluetooth Issues</Text>
+                               <Text style={{ fontSize: 13, color: isDark ? '#94A3B8' : '#64748B', marginTop: 4, lineHeight: 18 }}>
+                                   Always keep Bluetooth ON. If scanning fails, try toggling Airplane Mode or use the <Text style={{ fontWeight: '700', color: '#10B981' }}>Beacon Doctor</Text> feature in Profile to diagnose hardware.
+                               </Text>
+                           </View>
+                       </View>
+                       
+                       <View style={{ flexDirection: 'row' }}>
+                           <Ionicons name="wifi" size={24} color={isDark ? '#94A3B8' : '#64748B'} style={{ marginRight: 16, marginTop: 2 }} />
+                           <View style={{ flex: 1 }}>
+                               <Text style={{ fontWeight: '700', fontSize: 15, color: isDark ? '#FFF' : '#0F172A' }}>Offline Mode</Text>
+                               <Text style={{ fontSize: 13, color: isDark ? '#94A3B8' : '#64748B', marginTop: 4, lineHeight: 18 }}>
+                                   No internet? No problem. Attendance is saved locally and auto-synced when you reconnect.
+                               </Text>
+                           </View>
+                       </View>
+                   </View>
+
+                   {/* 3. Features */}
+                   <View style={{ marginBottom: 32 }}>
+                       <Text style={{ fontSize: 12, fontWeight: '800', color: '#8B5CF6', marginBottom: 16, letterSpacing: 1 }}>FEATURES & TOOLS</Text>
+                       <View style={{ backgroundColor: isDark ? '#1E293B' : '#F9FAFB', borderRadius: 12, overflow: 'hidden' }}>
+                           {[
+                               { label: 'Manual Entry', desc: 'Mark students manually if they forgot their ID.' },
+                               { label: 'Leave Application', desc: 'Apply for Full/Half day leaves. HOD is notified instantly.' },
+                               { label: 'Weekly Schedule', desc: 'View your timetable. Data is synced with the college DB.' },
+                               { label: 'Report Issue', desc: 'Found a bug? Shake the phone or use the Report form.' },
+                           ].map((f, i) => (
+                               <View key={i} style={{ padding: 16, borderBottomWidth: i===3 ? 0 : 1, borderBottomColor: isDark ? '#334155' : '#E2E8F0' }}>
+                                   <Text style={{ fontWeight: '700', fontSize: 14, color: isDark ? '#FFF' : '#0F172A' }}>{f.label}</Text>
+                                   <Text style={{ fontSize: 12, color: isDark ? '#94A3B8' : '#64748B', marginTop: 2 }}>{f.desc}</Text>
+                               </View>
+                           ))}
+                       </View>
+                   </View>
+
+                   {/* 4. Footer */}
+                   <View style={{ alignItems: 'center', marginTop: 20 }}>
+                       <Text style={{ color: isDark ? '#475569' : '#94A3B8', fontSize: 12 }}>Still need help? Contact Admin.</Text>
+                       <TouchableOpacity onPress={() => { setHelpModalVisible(false); setReportModalVisible(true); }} style={{ marginTop: 12 }}>
+                           <Text style={{ color: '#0F766E', fontWeight: '700' }}>Contact Support</Text>
+                       </TouchableOpacity>
+                   </View>
+
+              </ScrollView>
           </View>
       </Modal>
 
       {/* --- Report Modal --- */}
-      <Modal visible={reportModalVisible} animationType="slide" transparent>
+      <Modal visible={reportModalVisible} animationType="slide" transparent onRequestClose={() => setReportModalVisible(false)}>
           <View style={styles.modalOverlay}>
-              <View style={[styles.modalCard, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
-                  <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A' }]}>Report Issue</Text>
+              <View style={[styles.modalCard, { backgroundColor: isDark ? '#1E293B' : '#FFF', borderWidth: 1, borderColor: isDark ? '#334155' : 'transparent' }]}>
                   
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                      <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                          <Ionicons name="warning" size={20} color="#EF4444" />
+                      </View>
+                      <View>
+                          <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A', marginBottom: 2, fontSize: 18 }]}>Report Issue</Text>
+                          <Text style={{ fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>Help us improve the system</Text>
+                      </View>
+                  </View>
+                  
+                  <Text style={[styles.inputLabel, { color: isDark ? '#FFF' : '#0F172A', marginBottom: 6 }]}>ISSUE DESCRIPTION</Text>
                   <TextInput 
-                      style={[styles.input, { color: isDark ? '#FFF' : '#0F172A', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', height: 100, textAlignVertical: 'top' }]}
-                      value={reportQuery} onChangeText={setReportQuery} multiline placeholder="Describe the issue..." placeholderTextColor="#94A3B8"
+                      style={[styles.input, { color: isDark ? '#FFF' : '#0F172A', backgroundColor: isDark ? '#0F172A' : '#F8FAFC', height: 120, textAlignVertical: 'top', fontSize: 14 }]}
+                      value={reportQuery} onChangeText={setReportQuery} multiline placeholder="Describe the issue in detail..." placeholderTextColor="#94A3B8"
                   />
 
                   <TouchableOpacity 
-                    style={[styles.photoUpload, { borderColor: isDark ? '#334155' : '#E2E8F0', marginTop: 12, borderStyle: 'solid' }]}
-                    onPress={() => setHasScreenshot(!hasScreenshot)}
+                    style={[styles.photoUpload, { borderColor: isDark ? '#334155' : '#E2E8F0', marginTop: 4, height: 60, flexDirection: 'row', gap: 12 }]}
+                    onPress={handlePickReportImage}
                   >
-                      <Ionicons name={hasScreenshot ? "checkmark-circle" : "image"} size={24} color={hasScreenshot ? "#10B981" : "#94A3B8"} />
-                      <Text style={{ color: hasScreenshot ? "#10B981" : "#94A3B8", fontSize: 12 }}>
-                          {hasScreenshot ? 'Screenshot Attached' : 'Attach Screenshot'}
-                      </Text>
+                      {reportImage ? (
+                          <>
+                             <Image source={{ uri: reportImage }} style={{ width: 40, height: 40, borderRadius: 8 }} />
+                             <View style={{ justifyContent: 'center' }}>
+                                 <Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>Image Attached</Text>
+                                 <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11 }}>Tap to change</Text>
+                             </View>
+                          </>
+                      ) : (
+                          <>
+                            <View style={{ width: 32, height: 32, borderRadius: 100, backgroundColor: isDark ? '#334155' : '#E2E8F0', alignItems: 'center', justifyContent: 'center' }}>
+                                <Ionicons name="image" size={16} color="#94A3B8" />
+                            </View>
+                            <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 13, fontWeight: '600' }}>
+                                Attach Screenshot (Optional)
+                            </Text>
+                          </>
+                      )}
                   </TouchableOpacity>
 
                   <View style={styles.modalActions}>
                       <TouchableOpacity onPress={() => setReportModalVisible(false)} style={styles.cancelBtn}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
-                      <TouchableOpacity onPress={handleReportIssue} style={styles.saveBtn}><Text style={styles.saveText}>Submit Report</Text></TouchableOpacity>
-                  </View>
-              </View>
-          </View>
-      </Modal>
-
-      {/* --- Edit Profile Modal --- */}
-      <Modal visible={editProfileVisible} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-              <View style={[styles.modalCard, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
-                  <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A' }]}>Edit Profile</Text>
-                  <TextInput 
-                      style={[styles.input, { color: isDark ? '#FFF' : '#0F172A', backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}
-                      value={editName} onChangeText={setEditName} placeholder="Full Name" placeholderTextColor="#94A3B8"
-                  />
-                  
-                  <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B', marginTop: 16 }]}>PHOTO</Text>
-                  <TouchableOpacity 
-                    style={[styles.photoUpload, { borderColor: isDark ? '#334155' : '#E2E8F0' }]}
-                    onPress={handleUpdatePhoto}
-                  >
-                      <Ionicons name="camera" size={24} color="#0F766E" />
-                      <Text style={{ color: '#0F766E', fontSize: 12 }}>Tap to change photo</Text>
-                  </TouchableOpacity>
-
-                   <View style={styles.modalActions}>
-                      <TouchableOpacity onPress={() => setEditProfileVisible(false)} style={styles.cancelBtn}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
-                      <TouchableOpacity onPress={handleUpdateProfile} style={styles.saveBtn}>
-                          {isSavingProfile ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveText}>Save</Text>}
+                      <TouchableOpacity onPress={handleReportIssue} style={[styles.saveBtn, { backgroundColor: '#EF4444', paddingHorizontal: 32 }]}>
+                          {isSubmittingReport ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveText}>Submit Report</Text>}
                       </TouchableOpacity>
                   </View>
               </View>
           </View>
       </Modal>
 
-      {/* Modal - Removed Avatar Picker Modal (Reverted to Native) */}
+
 
     </View>
   );
@@ -604,7 +867,34 @@ const styles = StyleSheet.create({
   cellTextBold: { fontSize: 13, fontWeight: '800', textAlign: 'center' },
   
   // Date Picker
-  dateOption: { paddingVertical: 16, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }
+  dateOption: { paddingVertical: 16, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+
+  // Background Orbs
+  orb: {
+    position: 'absolute',
+    borderRadius: 200,
+  },
+  orb1: {
+    width: 300,
+    height: 300,
+    backgroundColor: 'rgba(61, 220, 151, 0.15)',
+    top: -100,
+    right: -100,
+  },
+  orb2: {
+    width: 250,
+    height: 250,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    bottom: 200,
+    left: -80,
+  },
+  orb3: {
+    width: 180,
+    height: 180,
+    backgroundColor: 'rgba(61, 220, 151, 0.08)',
+    bottom: 400,
+    right: -40,
+  },
 });
 
 

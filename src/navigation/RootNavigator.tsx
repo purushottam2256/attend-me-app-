@@ -28,6 +28,7 @@ import {
 } from '../features/incharge/screens';
 import { ManualEntryScreen } from '../features/scanning/screens/ManualEntryScreen';
 import { BeaconDoctorScreen } from '../features/diagnostics/screens/BeaconDoctorScreen';
+import { SyncManagerScreen } from '../features/sync/screens/SyncManagerScreen';
 
 // Keep native splash screen visible
 SplashScreenExpo.preventAutoHideAsync();
@@ -60,6 +61,7 @@ export type RootStackParamList = {
     goBackAction?: () => void 
   };
   BeaconDoctor: undefined;
+  SyncManager: undefined;
 };
 
 // Stacks
@@ -196,6 +198,11 @@ export const RootNavigator: React.FC = () => {
           <RootStack.Screen 
             name="BeaconDoctor" 
             component={BeaconDoctorScreen}
+            options={{ headerShown: false }}
+          />
+          <RootStack.Screen 
+            name="SyncManager" 
+            component={SyncManagerScreen}
             options={{ headerShown: false }}
           />
         </RootStack.Navigator>

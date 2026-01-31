@@ -10,7 +10,7 @@ interface SlideToLogoutProps {
 
 const { width } = Dimensions.get('window');
 const BUTTON_HEIGHT = 56;
-const BUTTON_WIDTH = width - 40;
+const BUTTON_WIDTH = width - 80;
 const SWIPE_THRESHOLD = BUTTON_WIDTH * 0.7;
 
 export const SlideToLogout: React.FC<SlideToLogoutProps> = ({ onLogout }) => {
