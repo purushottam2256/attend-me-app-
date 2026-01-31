@@ -28,6 +28,7 @@ import { supabase } from '../../../config/supabase';
 import { getAttendanceHistory, AttendanceSession } from '../../../services/dashboardService';
 import { EditAttendanceModal, FilterBar } from '../components';
 import { historyStyles as styles, DATE_TILE_WIDTH } from '../styles';
+import { ToastNotification } from '../../../components/ui/ToastNotification';
 
 // Months for picker
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -54,6 +55,13 @@ export const HistoryScreen: React.FC = () => {
   const [filterSection, setFilterSection] = useState<string>('all');
   const [filterPeriod, setFilterPeriod] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+
+  // Toast State
+  const [toast, setToast] = useState<{ visible: boolean, type: 'success' | 'error', message: string }>({ visible: false, type: 'success', message: '' });
+
+  const showToast = useCallback((type: 'success' | 'error', message: string) => {
+    setToast({ visible: true, type, message });
+  }, []);
 
   // Colors
   const colors = {
@@ -227,7 +235,7 @@ export const HistoryScreen: React.FC = () => {
       
       if (error) {
         console.error('[HistoryScreen] Error fetching attendance logs:', error);
-        Alert.alert('Error', 'Failed to fetch attendance data: ' + error.message);
+        showToast('error', 'Failed to fetch data: ' + error.message);
         return; // Don't open modal if fetch fails
       } else if (logs && logs.length > 0) {
         // Map real data to expected format
@@ -242,7 +250,7 @@ export const HistoryScreen: React.FC = () => {
       } else {
         // No logs found - show empty
         console.log('[HistoryScreen] No attendance logs found for session:', session.id);
-        Alert.alert('No Data', 'No attendance records found for this session');
+        showToast('error', 'No attendance records found');
         return;
       }
       
@@ -263,6 +271,7 @@ export const HistoryScreen: React.FC = () => {
     const absent = updatedStudents.filter(s => s.status === 'absent').length;
     console.log(`Saved: ${present} present, ${absent} absent`);
     setShowEditModal(false);
+    showToast('success', 'Attendance updated successfully');
     loadHistory(); // Refresh
   };
 
@@ -466,6 +475,7 @@ export const HistoryScreen: React.FC = () => {
               </Text>
               <Text style={[styles.meta, { color: colors.textSecondary }]}>
                 {session.target_dept}-{session.target_year}-{session.target_section} • {String(session.slot_id).toUpperCase()}
+                {session.batch ? ` • Batch ${session.batch}` : ''}
               </Text>
               
               {/* Substitution Labels */}
@@ -482,6 +492,16 @@ export const HistoryScreen: React.FC = () => {
                   <Ionicons name="person-add" size={12} color={colors.indicator} />
                   <Text style={{ fontSize: 11, color: colors.indicator, marginLeft: 4 }}>
                     Substituted for: {originalFacultyName}
+                  </Text>
+                </View>
+              )}
+              
+              {/* Batch Badge for Lab Clarity */}
+              {session.batch && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                  <Ionicons name="flask" size={12} color="#8B5CF6" />
+                  <Text style={{ fontSize: 11, color: '#8B5CF6', marginLeft: 4, fontWeight: '600' }}>
+                    Lab Session - Batch {session.batch}
                   </Text>
                 </View>
               )}
@@ -735,7 +755,6 @@ export const HistoryScreen: React.FC = () => {
 
       {renderMonthPicker()}
 
-      {/* Edit Attendance Modal */}
       <EditAttendanceModal
         visible={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -750,6 +769,14 @@ export const HistoryScreen: React.FC = () => {
         } : null}
         students={editStudents}
         onSave={handleSaveAttendance}
+      />
+
+      {/* Toast Notification */}
+      <ToastNotification
+        visible={toast.visible}
+        type={toast.type}
+        message={toast.message}
+        onDismiss={() => setToast(prev => ({ ...prev, visible: false }))}
       />
     </View>
   );

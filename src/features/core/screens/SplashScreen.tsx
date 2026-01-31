@@ -13,8 +13,8 @@ import {
   Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Fonts, Layout } from '../constants';
-import { getCurrentSession, getStoredProfile } from '../services/authService';
+import { Colors, Fonts, Layout } from '../../../constants';
+import { getCurrentSession, getStoredProfile } from '../../../services/authService';
 
 const { width } = Dimensions.get('window');
 
@@ -149,7 +149,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
       >
         <View style={styles.logoGlow} />
         <Image
-          source={require('../../assets/splash-logo.jpg')}
+          source={require('../../../../assets/splash-logo.jpg')}
           style={styles.logo}
           resizeMode="contain"
         />

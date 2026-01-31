@@ -24,6 +24,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../contexts';
 import { supabase } from '../../../config/supabase';
+import { ToastNotification } from '../../../components/ui/ToastNotification';
 
 // Types
 interface Student {
@@ -70,6 +71,13 @@ export const EditAttendanceModal: React.FC<EditAttendanceModalProps> = ({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Toast State
+  const [toast, setToast] = useState<{ visible: boolean, type: 'success' | 'error', message: string }>({ visible: false, type: 'success', message: '' });
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ visible: true, type, message });
+  };
+
   // Reset state when modal opens
   useEffect(() => {
     if (visible) {
@@ -77,6 +85,7 @@ export const EditAttendanceModal: React.FC<EditAttendanceModalProps> = ({
       setSearchQuery('');
       setFilter('all');
       setHasChanges(false);
+      setToast(prev => ({ ...prev, visible: false }));
     }
   }, [visible, initialStudents]);
 
@@ -219,11 +228,10 @@ export const EditAttendanceModal: React.FC<EditAttendanceModalProps> = ({
   // Save changes to Supabase
   const handleSave = async () => {
     if (!session) {
-      Alert.alert('Error', 'No session selected');
+      showToast('error', 'No session selected');
       return;
     }
     if (!hasChanges) {
-      Alert.alert('Info', 'No changes to save');
       onClose();
       return;
     }
@@ -274,13 +282,12 @@ export const EditAttendanceModal: React.FC<EditAttendanceModalProps> = ({
         throw sessionError;
       }
       
-      // Call parent callback and close
-      Alert.alert('Success', 'Attendance saved successfully');
+      // Call parent callback and close - Success alert removed (handled by parent)
       onSave(students);
       onClose();
     } catch (error: any) {
       console.error('[EditAttendanceModal] Save error:', error);
-      Alert.alert('Error', error.message || 'Failed to save attendance');
+      showToast('error', error.message || 'Failed to save attendance');
     }
   };
 
@@ -404,7 +411,7 @@ export const EditAttendanceModal: React.FC<EditAttendanceModalProps> = ({
             <TouchableOpacity
               style={[styles.exportBtn, { backgroundColor: '#4285F4' }]}
               onPress={() => { 
-                Alert.alert('JSON Export', 'Use the Export button on History screen for file exports'); 
+                showToast('error', 'Use the Export button on History screen');
                 setShowExportMenu(false); 
               }}
             >
@@ -415,7 +422,7 @@ export const EditAttendanceModal: React.FC<EditAttendanceModalProps> = ({
             <TouchableOpacity
               style={[styles.exportBtn, { backgroundColor: '#217346' }]}
               onPress={() => { 
-                Alert.alert('Excel Export', 'Use the Export button on History screen for file exports'); 
+                showToast('error', 'Use the Export button on History screen');
                 setShowExportMenu(false); 
               }}
             >
@@ -426,7 +433,7 @@ export const EditAttendanceModal: React.FC<EditAttendanceModalProps> = ({
             <TouchableOpacity
               style={[styles.exportBtn, { backgroundColor: '#E53935' }]}
               onPress={() => { 
-                Alert.alert('PDF Export', 'PDF generation coming soon!'); 
+                showToast('error', 'PDF generation coming soon!');
                 setShowExportMenu(false); 
               }}
             >
@@ -567,6 +574,14 @@ export const EditAttendanceModal: React.FC<EditAttendanceModalProps> = ({
         </View>
 
         {renderExportMenu()}
+
+        {/* Toast Notification */}
+        <ToastNotification
+          visible={toast.visible}
+          type={toast.type}
+          message={toast.message}
+          onDismiss={() => setToast(prev => ({ ...prev, visible: false }))}
+        />
       </View>
     </Modal>
   );

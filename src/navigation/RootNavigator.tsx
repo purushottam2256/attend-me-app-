@@ -16,7 +16,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 
-import { SplashScreen } from '../screens/SplashScreen';
+import { SplashScreen } from '../features/core';
 import { LoginScreen, ForgotPasswordScreen } from '../features/auth';
 import { Colors } from '../constants';
 import { signOut, getStoredProfile } from '../services/authService';
@@ -26,6 +26,8 @@ import {
   PermissionScreen,
   ManagePermissionsScreen,
 } from '../features/incharge/screens';
+import { ManualEntryScreen } from '../features/scanning/screens/ManualEntryScreen';
+import { BeaconDoctorScreen } from '../features/diagnostics/screens/BeaconDoctorScreen';
 
 // Keep native splash screen visible
 SplashScreenExpo.preventAutoHideAsync();
@@ -42,6 +44,22 @@ export type RootStackParamList = {
   Main: undefined;
   Permission: undefined;
   ManagePermissions: undefined;
+  ManualEntry: { 
+    classData: {
+      id?: string;
+      slot_id?: string;
+      subject?: { id: string; name: string; code: string };
+      target_dept: string;
+      target_year: number;
+      target_section: string;
+      batch?: number | null;
+      isSubstitute?: boolean;
+      originalFacultyId?: string | null;
+    }; 
+    existingAttendance?: Map<string, string>; 
+    goBackAction?: () => void 
+  };
+  BeaconDoctor: undefined;
 };
 
 // Stacks
@@ -168,6 +186,16 @@ export const RootNavigator: React.FC = () => {
           <RootStack.Screen 
             name="ManagePermissions" 
             component={ManagePermissionsScreen}
+            options={{ headerShown: false }}
+          />
+          <RootStack.Screen 
+            name="ManualEntry" 
+            component={ManualEntryScreen}
+            options={{ headerShown: false, animation: 'slide_from_bottom' }}
+          />
+          <RootStack.Screen 
+            name="BeaconDoctor" 
+            component={BeaconDoctorScreen}
             options={{ headerShown: false }}
           />
         </RootStack.Navigator>

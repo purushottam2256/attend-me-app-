@@ -19,6 +19,7 @@ import { useTheme } from '../../../contexts';
 
 const SWIPE_THRESHOLD = 50;
 
+
 type StudentStatus = 'pending' | 'present' | 'absent' | 'od' | 'leave';
 
 interface StudentCardProps {
@@ -40,6 +41,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   const translateX = useRef(new Animated.Value(0)).current;
   const isSwipingRef = useRef(false);
 
+  /* Helper to get initials */
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -49,6 +51,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       .slice(0, 2);
   };
 
+  /* PanResponder for Swipe Gestures */
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -92,40 +95,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       },
     })
   ).current;
-
-type StudentStatus = 'pending' | 'present' | 'absent' | 'od' | 'leave';
-
-interface StudentCardProps {
-  name: string;
-  rollNo: string;
-  photoUrl?: string;
-  status: StudentStatus;
-  onStatusChange: (newStatus: StudentStatus) => void;
-}
-
-export const StudentCard: React.FC<StudentCardProps> = ({
-  name,
-  rollNo,
-  photoUrl,
-  status,
-  onStatusChange,
-}) => {
-  const { isDark } = useTheme();
-  const translateX = useRef(new Animated.Value(0)).current;
-  const isSwipingRef = useRef(false);
-
-  // ... (lines 43-95 skipped in edit, assumed unchanged, but I need to make sure I don't break them. The tool won't let me skip middle lines easily if I replace a block. I will target specific blocks.)
-  // Actually, I can't use '...' in replacement. I have to replace what I target.
-  // I will target the switch block `getStatusStyle` and the type definition separately if needed, or just the top block and the style block.
-  // Using separate call for styles/type.
-  
-  // Need to handle PanResponder logic for OD/Leave? 
-  // Should users be able to swipe OD/Leave students? 
-  // Probably yes, to manually override. Swipe Right -> Present. Swipe Left -> Absent.
-  // That logic is in lines 72/75: `onStatusChange('present')` / `onStatusChange('absent')`.
-  // That remains valid. If manually swiped, it overrides OD/Leave.
-  
-  // This replacement is just for `getStatusStyle`.
   const getStatusStyle = () => {
     switch (status) {
       case 'present':

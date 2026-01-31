@@ -24,8 +24,10 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Dimensions,
+  Modal,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -145,6 +147,19 @@ export const ScanScreen: React.FC = () => {
 
   // Use route classData if provided, otherwise use fetched liveClassData
   const routeClassData = route.params?.classData;
+  const existingAttendance = route.params?.existingAttendance;
+  const isManualLegacy = route.params?.manual;
+
+  // Failsafe: Redirect to ManualEntry if manual param is present (legacy or stale calls)
+  useEffect(() => {
+    if (isManualLegacy && routeClassData) {
+      navigation.replace("ManualEntry", {
+        classData: routeClassData,
+        existingAttendance,
+      });
+    }
+  }, [isManualLegacy, routeClassData, navigation, existingAttendance]);
+
   const classData = routeClassData || liveClassData;
 
   // Auto-fetch current live class if not provided via route
@@ -226,11 +241,21 @@ export const ScanScreen: React.FC = () => {
   const [showBlocked, setShowBlocked] = useState(false);
   const [blockReason, setBlockReason] = useState<BlockReason>("no_class");
 
-  // Show blocked modal when no live class (break time)
+  // Show blocked modal when no live class
   useEffect(() => {
     if (noLiveClassError && !routeClassData) {
       console.log("[ScanScreen] No live class - showing blocked modal");
-      setBlockReason("no_class");
+      
+      const now = new Date();
+      const currentHour = now.getHours();
+      
+      // If after 4 PM (16:00), show Day Complete instead of Break Time
+      if (currentHour >= 16) {
+        setBlockReason("after_hours");
+      } else {
+        setBlockReason("no_class");
+      }
+      
       setShowBlocked(true);
     }
   }, [noLiveClassError, routeClassData]);
@@ -242,6 +267,36 @@ export const ScanScreen: React.FC = () => {
     scheduleValid: true,
     noPreviousScan: true,
   });
+
+  // BLE Modal State
+  const [showBleModal, setShowBleModal] = useState(false);
+  const [bleError, setBleError] = useState({ title: "", message: "" });
+  const [retryTrigger, setRetryTrigger] = useState(0);
+
+  const handleBleRetry = async () => {
+    // 1. Re-check immediately
+    const bleCheck = await isBLEReady();
+
+    if (bleCheck.ready) {
+      console.log("[ScanScreen] Retry successful - BLE is ready");
+      setShowBleModal(false);
+      // Force handshake restart
+      handshakeProgress.setValue(0);
+      handshakeRotation.setValue(0);
+      setRetryTrigger((prev) => prev + 1);
+    } else {
+      console.log("[ScanScreen] Retry failed - BLE still not ready");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setBleError({
+        title: "Still Unavailable",
+        message:
+          bleCheck.reason === "poweredOff" ||
+          bleCheck.reason === "bluetooth_off"
+            ? "Bluetooth is turned off. Please enable it in Control Center."
+            : "Permission is denied. Please enable in Settings.",
+      });
+    }
+  };
 
   // College hours configuration
   const COLLEGE_START_HOUR = 8;
@@ -425,50 +480,27 @@ export const ScanScreen: React.FC = () => {
 
         if (!bleCheck.ready) {
           handshakeRotation.stopAnimation();
-          const { Alert } = await import("react-native");
+
+          let title = "Bluetooth Required";
+          let message = "Please enable Bluetooth to continue.";
 
           if (
             bleCheck.reason === "bluetooth_off" ||
             bleCheck.reason === "poweredOff"
           ) {
-            Alert.alert(
-              "Bluetooth Required",
-              "Please turn on Bluetooth to scan for student devices.",
-              [
-                {
-                  text: "Go Back",
-                  onPress: () => navigation.navigate("Home" as never),
-                },
-                { text: "Retry", onPress: () => setScanState("HANDSHAKE") },
-              ],
-            );
+            title = "Bluetooth Off";
+            message = "Please turn on Bluetooth to scan for student devices.";
           } else if (
             bleCheck.reason === "unauthorized" ||
             bleCheck.reason === "denied"
           ) {
-            Alert.alert(
-              "Bluetooth Permission Required",
-              "Please grant Bluetooth permission in your device settings.",
-              [
-                {
-                  text: "Go Back",
-                  onPress: () => navigation.navigate("Home" as never),
-                },
-              ],
-            );
-          } else {
-            Alert.alert(
-              "Bluetooth Unavailable",
-              `Cannot start scanning: ${bleCheck.reason || "Unknown error"}`,
-              [
-                {
-                  text: "Go Back",
-                  onPress: () => navigation.navigate("Home" as never),
-                },
-                { text: "Retry", onPress: () => setScanState("HANDSHAKE") },
-              ],
-            );
+            title = "Permission Denied";
+            message =
+              "Please grant Bluetooth permission in your device settings.";
           }
+
+          setBleError({ title, message });
+          setShowBleModal(true);
           return;
         }
 
@@ -567,7 +599,7 @@ export const ScanScreen: React.FC = () => {
     isScanning: bleIsScanning,
     permissionsGranted,
     detectedCount: bleDetectedCount,
-    error: bleError,
+    error: bleHookError,
     startBLEScan,
     stopBLEScan,
     requestPermissions,
@@ -822,7 +854,10 @@ export const ScanScreen: React.FC = () => {
   }, [navigation]);
 
   const handleStudentStatusChange = useCallback(
-    (studentId: string, newStatus: "pending" | "present" | "absent") => {
+    (
+      studentId: string,
+      newStatus: "pending" | "present" | "absent" | "od" | "leave",
+    ) => {
       updateStudentStatus(studentId, newStatus);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     },
@@ -870,6 +905,20 @@ export const ScanScreen: React.FC = () => {
         <Text style={styles.handshakeStatus}>
           Downloading roster • Verifying Bluetooth
         </Text>
+
+        <TouchableOpacity
+          style={{ marginTop: 40, padding: 10 }}
+          onPress={() =>
+            navigation.navigate("ManualEntry", {
+              classData,
+              existingAttendance,
+            })
+          }
+        >
+          <Text style={{ color: COLORS.accent, fontWeight: "600" }}>
+            Switch to Manual Entry
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -930,16 +979,33 @@ export const ScanScreen: React.FC = () => {
           <Text style={styles.headerTitle}>{subjectName}</Text>
           <Text style={styles.headerSubtitle}>{section}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={handleAutoPilotToggle}
-        >
-          <Ionicons
-            name={isAutoPilot ? "flash" : "flash-outline"}
-            size={22}
-            color={isAutoPilot ? COLORS.accent : COLORS.textSecondary}
-          />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() =>
+              navigation.navigate("ManualEntry", {
+                classData,
+                existingAttendance,
+              })
+            }
+          >
+            <Ionicons
+              name="grid-outline"
+              size={22}
+              color={COLORS.textPrimary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={handleAutoPilotToggle}
+          >
+            <Ionicons
+              name={isAutoPilot ? "flash" : "flash-outline"}
+              size={22}
+              color={isAutoPilot ? COLORS.accent : COLORS.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
       </Animated.View>
 
       {/* Radar Zone */}
@@ -1121,6 +1187,76 @@ export const ScanScreen: React.FC = () => {
           });
         }}
       />
+
+      {/* BLE Error Modal */}
+      <Modal
+        visible={showBleModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <BlurView intensity={90} tint="dark" style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View
+              style={[
+                styles.modalAvatarPlaceholder,
+                {
+                  backgroundColor: "rgba(245, 158, 11, 0.15)",
+                  marginBottom: 24,
+                },
+              ]}
+            >
+              <Ionicons name="bluetooth" size={32} color="#F59E0B" />
+            </View>
+
+            <Text style={styles.modalName}>
+              {bleError.title || "Bluetooth Issue"}
+            </Text>
+            <Text
+              style={[
+                styles.modalRoll,
+                { textAlign: "center", marginBottom: 24 },
+              ]}
+            >
+              {bleError.message || "Please enable Bluetooth."}
+            </Text>
+
+            <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+              <TouchableOpacity
+                style={[
+                  styles.bulkButton,
+                  {
+                    backgroundColor: "transparent",
+                    borderColor: "rgba(255,255,255,0.2)",
+                    borderWidth: 1,
+                  },
+                ]}
+                onPress={() => navigation.navigate("Home" as never)}
+              >
+                <Text style={[styles.bulkText, { color: "#FFF" }]}>
+                  Go Back
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.bulkButton,
+                  {
+                    backgroundColor: "#3DDC97",
+                    borderColor: "#3DDC97",
+                    flex: 1.5,
+                  },
+                ]}
+                onPress={handleBleRetry}
+              >
+                <Text style={[styles.bulkText, { color: "#0D4A4A" }]}>
+                  Retry
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </BlurView>
+      </Modal>
     </View>
   );
 };
@@ -1407,6 +1543,51 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
   },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalCard: {
+    width: "85%",
+    backgroundColor: "rgba(30,30,30,0.9)",
+    borderRadius: 24,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  modalAvatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalName: {
+    color: "#FFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  modalRoll: { color: "rgba(255,255,255,0.6)", fontSize: 16, marginBottom: 16 },
+  modalInfo: { color: "rgba(255,255,255,0.5)", fontSize: 14, marginBottom: 4 },
+  bulkButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  bulkText: { fontWeight: "600", fontSize: 14 },
 });
 
 export default ScanScreen;

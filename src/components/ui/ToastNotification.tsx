@@ -25,6 +25,7 @@ interface ToastNotificationProps {
   type: ToastType;
   message: string;
   onDismiss: () => void;
+  onRetry?: () => void;
   duration?: number; // ms, default 3000
 }
 
@@ -33,6 +34,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
   type,
   message,
   onDismiss,
+  onRetry,
   duration = 3000,
 }) => {
   const { isDark } = useTheme();
@@ -119,6 +121,12 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
         <Text style={[styles.message, { color: '#FFFFFF' }]} numberOfLines={2}>
           {message}
         </Text>
+        
+        {type === 'error' && onRetry && (
+          <TouchableOpacity onPress={onRetry} style={styles.retryButton}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={handleDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="close" size={18} color="rgba(255,255,255,0.6)" />
         </TouchableOpacity>
@@ -153,6 +161,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 20,
+  },
+  retryButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  retryText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
 

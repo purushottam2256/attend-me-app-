@@ -450,6 +450,25 @@ INSERT INTO public.app_config (key, value, description) VALUES
     ('semester', '"1"', 'Current semester (1 or 2)'),
     ('college_service_uuid', '"0000FEED-0000-1000-8000-00805F9B34FB"', 'BLE Service UUID for beacons');
 
+-- ----------------------------------------------------------------------------
+-- 16. CLASS INCHARGES
+-- ----------------------------------------------------------------------------
+CREATE TABLE public.class_incharges (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    faculty_id UUID NOT NULL REFERENCES public.profiles(id),
+    dept TEXT NOT NULL,
+    year INTEGER NOT NULL,
+    section TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT unique_class_incharge UNIQUE (dept, year, section),
+    CONSTRAINT unique_faculty_assignment UNIQUE (faculty_id, dept, year, section)
+);
+
+-- Indexes
+CREATE INDEX idx_class_incharges_faculty ON public.class_incharges(faculty_id);
+CREATE INDEX idx_class_incharges_class ON public.class_incharges(dept, year, section);
+
 -- ============================================================================
 -- MATERIALIZED VIEWS (For Performance - Free Tier Compatible)
 -- ============================================================================
@@ -785,6 +804,7 @@ ALTER TABLE public.attendance_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.offline_queue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.class_incharges ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- SECURITY DEFINER FUNCTIONS (Bypass RLS to avoid infinite recursion)

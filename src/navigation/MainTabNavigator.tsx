@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 
 import { HomeScreen } from '../features/dashboard';
-import { AttendanceScreen } from '../screens/dashboard'; // Still in old location
+import { AttendanceScreen } from '../features/attendance';
 import { HistoryScreen } from '../features/history';
 import { ProfileScreen } from '../features/profile';
 import { ScanScreen } from '../features/scanning';

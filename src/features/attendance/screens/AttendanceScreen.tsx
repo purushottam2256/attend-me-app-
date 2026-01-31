@@ -16,8 +16,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../contexts';
-import { supabase } from '../../config/supabase';
+import { useTheme } from '../../../contexts';
+import { supabase } from '../../../config/supabase';
 import { 
   getTodaySchedule, 
   getStudentsForClass, 
@@ -25,7 +25,7 @@ import {
   submitAttendance,
   TimetableSlot, 
   Student 
-} from '../../services/dashboardService';
+} from '../../../services/dashboardService';
 
 interface AttendanceRecord {
   studentId: string;

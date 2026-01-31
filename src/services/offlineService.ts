@@ -34,6 +34,7 @@ export interface CachedStudent {
   name: string;
   rollNo: string;
   bluetoothUUID: string | null;
+  batch?: number;
 }
 
 export interface PendingSubmission {
@@ -45,7 +46,7 @@ export interface PendingSubmission {
   };
   attendance: {
     studentId: string;
-    status: 'present' | 'absent' | 'od';
+    status: 'present' | 'absent' | 'od' | 'leave';
   }[];
   submittedAt: string;
   retryCount: number;
@@ -79,7 +80,7 @@ export async function cacheAllRosters(
       // Fetch students for this class
       const { data: students, error } = await supabase
         .from('students')
-        .select('id, name, roll_number, bluetooth_uuid')
+        .select('id, name, roll_number, bluetooth_uuid, batch')
         .eq('department', slot.target_dept)
         .eq('year', slot.target_year)
         .eq('section', slot.target_section)
@@ -100,6 +101,7 @@ export async function cacheAllRosters(
           name: s.name,
           rollNo: s.roll_number,
           bluetoothUUID: s.bluetooth_uuid,
+          batch: s.batch,
         })),
         cachedAt: new Date().toISOString(),
       };

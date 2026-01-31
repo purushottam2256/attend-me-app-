@@ -210,6 +210,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ userName }) => {
       // Create sets for quick lookup
       const swappedSlots = new Set(swaps.flatMap(s => [s.slot_a_id, s.slot_b_id]));
       const substituteSlots = substitutions.map(s => s.slot_id);
+
+      // Fetch today's completed sessions from backend (Source of Truth)
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
+
+      const { data: completedSessions } = await supabase
+        .from('attendance_sessions')
+        .select('slot_id')
+        .eq('faculty_id', user.id)
+        .eq('date', todayStr);
+      
+      const completedSlotIds = new Set((completedSessions || []).map(s => s.slot_id));
       
       // Grace period in minutes after class ends (for scanning)
       const GRACE_MINUTES = 10;
@@ -229,9 +244,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ userName }) => {
           status = 'live';
         } else if (now > graceEnd) {
           // Past grace period - check if attendance was taken
-          const classKey = `${slot.subject?.name}_${slot.target_dept}-${slot.target_year}-${slot.target_section}`;
-          const stored = await AsyncStorage.getItem(`@attend_me/attendance_${classKey}`);
-          status = stored ? 'completed' : 'incomplete';
+          status = completedSlotIds.has(slot.slot_id) ? 'completed' : 'incomplete';
         } else {
           status = 'upcoming';
         }
@@ -288,9 +301,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ userName }) => {
     }
   }, [determineHeroState]);
 
-  useEffect(() => {
-    loadSchedule();
-  }, [loadSchedule]);
+  useFocusEffect(
+    useCallback(() => {
+      loadSchedule(true);
+    }, [loadSchedule])
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -321,13 +336,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ userName }) => {
     if (isLab) {
       setShowBatchModal(true);
     } else {
-      navigation.navigate('Scan', { classData: currentClass, batch: 'full', manual: true });
+      navigation.navigate('ManualEntry', { classData: currentClass });
     }
   };
 
   const navigateToScanner = (batch: 'full' | 1 | 2) => {
     setShowBatchModal(false);
-    navigation.navigate('Scan', { classData: currentClass, batch, manual: isManualMode });
+    if (isManualMode) {
+      // Pass the filtered batch to ManualEntry, but ManualEntry accepts 'classData' and handles batching internally?
+      // Actually ManualEntryScreen has a batch filter UI. But if we selected a batch from modal, maybe we should preset it?
+      // ManualEntryScreen uses 'batch: full' by default in useAttendance. 
+      // It has a filter UI.
+      // If user selected Batch 1, maybe we should filter? 
+      // Current ManualEntryScreen doesn't accept 'batch' param to preset filter.
+      // But we can just navigate to it. It has its own filter.
+      // Users might be annoyed if they selected batch and it shows all. 
+      // But 'ManualEntryScreen' is designed to show filtering inside. 
+      // Ideally we shouldn't show batch modal for manual entry if the screen handles it.
+      // But 'handleManualEntry' logic checks isLab and shows modal.
+      // Let's just navigate. The screen allows changing batches.
+      navigation.navigate('ManualEntry', { classData: currentClass });
+    } else {
+      navigation.navigate('Scan', { classData: currentClass, batch, manual: false });
+    }
     setIsManualMode(false);
   };
 
@@ -350,7 +381,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ userName }) => {
         break;
       case 'incomplete':
         // Past grace period - manual add only
-        navigation.navigate('Scan', { classData: slot, batch: 'full', manual: true });
+        navigation.navigate('ManualEntry', { classData: slot });
         break;
       case 'upcoming':
         // Go to Swap for upcoming class
@@ -402,7 +433,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ userName }) => {
 
   const handleOffHoursClassSelect = (selectedClass: ScheduleSlot) => {
     setShowOffHoursModal(false);
-    navigation.navigate('Scan', { classData: selectedClass, batch: 'full', manual: true });
+    navigation.navigate('ManualEntry', { classData: selectedClass });
   };
 
   const renderHeader = () => (

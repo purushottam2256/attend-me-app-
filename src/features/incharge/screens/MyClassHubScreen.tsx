@@ -114,6 +114,7 @@ export const MyClassHubScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [p1, setP1] = useState<PeriodAttendance | null>(null);
   const [p4, setP4] = useState<PeriodAttendance | null>(null);
   const [watchlist, setWatchlist] = useState<StudentAggregate[]>([]);
@@ -121,13 +122,13 @@ export const MyClassHubScreen: React.FC = () => {
   const [trendRange, setTrendRange] = useState<'day' | 'week' | 'month'>('week');
 
   // Load Class Info
-  const fetchClassInfo = async () => {
+  const fetchClassInfo = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
     const assignment = await getAssignedClass(user.id);
     if (!assignment) console.log('[MyClassHub] No class assignment found.');
     return assignment;
-  };
+  }, []);
 
   // Load Data
   const loadData = useCallback(async () => {
@@ -138,6 +139,7 @@ export const MyClassHubScreen: React.FC = () => {
         return;
       }
       setClassInfo(info);
+      setError(null);
 
       const [periods, students] = await Promise.all([
         getKeyPeriodAttendance(info.dept, info.year, info.section),
@@ -149,10 +151,11 @@ export const MyClassHubScreen: React.FC = () => {
       setWatchlist(students.slice(0, 5));
     } catch (error) {
       console.error('[MyClassHub] Error loading data:', error);
+      setError('Failed to load class data');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchClassInfo]);
 
   // Fetch trends
   useEffect(() => {
@@ -229,6 +232,25 @@ export const MyClassHubScreen: React.FC = () => {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#111' : '#F5F5F5' }]}>
         <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#111' : '#F5F5F5', gap: 12 }]}>
+        <Ionicons name="alert-circle" size={48} color={colors.textSecondary} />
+        <Text style={[styles.loadingText, { color: colors.textPrimary }]}>{error}</Text>
+        <TouchableOpacity 
+          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: colors.accent, borderRadius: 8 }}
+          onPress={() => {
+            setLoading(true);
+            setError(null);
+            loadData();
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }

@@ -30,6 +30,7 @@ export interface AttendanceStudent {
   bleUUID?: string;
   status: 'pending' | 'present' | 'absent' | 'od' | 'leave';
   detectedAt?: number;
+  batch?: number | null;
 }
 
 interface ClassData {
@@ -83,7 +84,7 @@ export function useAttendance({ classData, batch }: UseAttendanceOptions): UseAt
   const totalCount = students.length;
 
   // Fetch students for the class (with offline fallback)
-  const fetchStudents = useCallback(async () => {
+  const fetchStudents = useCallback(async (signal?: AbortSignal) => {
     if (!classData) {
       setLoading(false);
       return;
@@ -95,12 +96,10 @@ export function useAttendance({ classData, batch }: UseAttendanceOptions): UseAt
     try {
       const { target_dept, target_year, target_section } = classData;
       
-      // Convert batch to number or null
       const batchNumber = batch === 'b1' ? 1 : batch === 'b2' ? 2 : null;
       
       let mappedStudents: AttendanceStudent[] = [];
       
-      // Try online fetch first if connected
       if (isOnline) {
         try {
           const fetchedStudents = await getStudentsForClass(
@@ -110,13 +109,13 @@ export function useAttendance({ classData, batch }: UseAttendanceOptions): UseAt
             batchNumber
           );
 
-          // Get active permissions for today
+          if (signal?.aborted) return;
+
           const permissions = await getClassPermissions(fetchedStudents.map(s => s.id));
           const permissionMap = new Map(permissions.map(p => [p.student_id, p.type]));
 
           mappedStudents = fetchedStudents.map(s => {
             const permissionType = permissionMap.get(s.id);
-            // If OD/Leave exists, set status automatically
             const initialStatus = permissionType 
               ? permissionType as 'od' | 'leave'
               : 'pending';
@@ -128,18 +127,21 @@ export function useAttendance({ classData, batch }: UseAttendanceOptions): UseAt
               bleUUID: s.bluetooth_uuid || undefined,
               status: initialStatus,
               photoUrl: undefined,
+              batch: s.batch,
             };
           });
           
           setIsOfflineMode(false);
         } catch (onlineErr) {
+          if (signal?.aborted) return;
           console.log('[useAttendance] Online fetch failed, trying cache');
         }
       }
       
-      // Fallback to cached roster if online fetch failed or offline
-      if (mappedStudents.length === 0) {
-        const slotId = classData.slot_id ? parseInt(classData.slot_id) : 0;
+      if (mappedStudents.length === 0 && !signal?.aborted) {
+        const slotIdStr = String(classData.slot_id || '0');
+        const slotId = /^\d+$/.test(slotIdStr) ? parseInt(slotIdStr, 10) : 0;
+        
         const cachedRoster = await getCachedRoster(slotId);
         
         if (cachedRoster && (await isCacheValid())) {
@@ -149,14 +151,16 @@ export function useAttendance({ classData, batch }: UseAttendanceOptions): UseAt
             name: s.name,
             rollNo: s.rollNo,
             bleUUID: s.bluetoothUUID || undefined,
-            status: 'pending' as const, // Cannot verify permissions offline easily unless cached
+            status: 'pending' as const, 
             photoUrl: undefined,
+            batch: s.batch,
           }));
           
-          // Filter by batch if needed
           if (batchNumber) {
-            // Assume odd roll numbers are B1, even are B2 (configurable)
             mappedStudents = mappedStudents.filter(s => {
+              if (s.batch !== undefined && s.batch !== null) {
+                return s.batch === batchNumber;
+              }
               const rollNum = parseInt(s.rollNo.replace(/\D/g, '')) || 0;
               return batchNumber === 1 ? rollNum % 2 === 1 : rollNum % 2 === 0;
             });
@@ -169,18 +173,26 @@ export function useAttendance({ classData, batch }: UseAttendanceOptions): UseAt
         }
       }
 
-      setStudents(mappedStudents);
+      if (!signal?.aborted) {
+        setStudents(mappedStudents);
+      }
     } catch (err) {
-      console.error('Error fetching students:', err);
-      setError('Failed to load students');
+      if (!signal?.aborted) {
+        console.error('Error fetching students:', err);
+        setError('Failed to load students');
+      }
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   }, [classData, batch, isOnline]);
 
   // Fetch on mount and when class/batch changes
   useEffect(() => {
-    fetchStudents();
+    const controller = new AbortController();
+    fetchStudents(controller.signal);
+    return () => controller.abort();
   }, [fetchStudents]);
 
   // Update a single student's status

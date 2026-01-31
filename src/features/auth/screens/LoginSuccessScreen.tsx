@@ -12,7 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Fonts, Layout } from '../constants';
+import { Colors, Fonts, Layout } from '../../../constants';
 
 const { width } = Dimensions.get('window');
 

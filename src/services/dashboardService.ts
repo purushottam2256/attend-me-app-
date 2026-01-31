@@ -30,6 +30,7 @@ export interface Student {
   roll_no: string;
   full_name: string;
   bluetooth_uuid: string | null;
+  batch?: number | null;
 }
 
 export interface AttendanceSession {
@@ -40,6 +41,7 @@ export interface AttendanceSession {
   target_dept: string;
   target_section: string;
   target_year: number;
+  batch?: number | null;
   present_count: number;
   absent_count: number;
   total_students: number;
@@ -292,7 +294,7 @@ export async function getStudentsForClass(
   try {
     let query = supabase
       .from('students')
-      .select('id, roll_no, full_name, bluetooth_uuid')
+      .select('id, roll_no, full_name, bluetooth_uuid, batch')
       .eq('dept', dept)
       .eq('year', year)
       .eq('section', section)
@@ -403,6 +405,34 @@ export async function createAttendanceSession(
 }
 
 /**
+ * Check if a session already exists for this slot
+ */
+export async function checkExistingSession(
+  facultyId: string, 
+  slotId: string,
+  isSubstitute: boolean = false,
+  originalFacultyId?: string | null
+): Promise<boolean> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const targetFacultyId = isSubstitute && originalFacultyId ? originalFacultyId : facultyId;
+    
+    const { data } = await supabase
+      .from('attendance_sessions')
+      .select('id')
+      .eq('faculty_id', targetFacultyId)
+      .eq('date', today)
+      .eq('slot_id', slotId)
+      .maybeSingle();
+      
+    return !!data;
+  } catch (error) {
+    console.error('Error checking session:', error);
+    return false;
+  }
+}
+
+/**
  * Submit attendance logs for a session
  */
 export async function submitAttendance(
@@ -485,6 +515,7 @@ export async function getAttendanceHistory(
         target_dept,
         target_section,
         target_year,
+        batch,
         present_count,
         absent_count,
         total_students,

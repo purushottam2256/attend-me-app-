@@ -4,6 +4,19 @@
 
 import { supabase } from '../../../config/supabase';
 
+// Helper for local date (YYYY-MM-DD)
+const getLocalDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Constants
+const CRITICAL_ATTENDANCE_THRESHOLD = 75;
+const KEY_SLOTS = ['p1', 'p4'];
+
 // Types
 export interface StudentAggregate {
   student_id: string;
@@ -70,7 +83,7 @@ export const getWatchlist = async (
   dept: string,
   year: number,
   section: string,
-  threshold: number = 75
+  threshold: number = CRITICAL_ATTENDANCE_THRESHOLD
 ): Promise<StudentAggregate[]> => {
   const { data, error } = await supabase
     .from('view_student_aggregates')
@@ -113,7 +126,7 @@ export const getKeyPeriodAttendance = async (
   year: number,
   section: string
 ): Promise<{ p1: PeriodAttendance | null; p4: PeriodAttendance | null }> => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDate();
   
   const { data, error } = await supabase
     .from('attendance_sessions')
@@ -126,7 +139,7 @@ export const getKeyPeriodAttendance = async (
     .eq('target_year', year)
     .eq('target_section', section)
     .eq('date', today)
-    .in('slot_id', ['p1', 'p4']);
+    .in('slot_id', KEY_SLOTS);
 
   if (error) {
     console.error('[InchargeService] Error fetching period attendance:', error);
@@ -169,7 +182,7 @@ export const getClassTrends = async (
   
   if (range === 'day') {
     // Today's periods
-    const todayStr = endDate.toISOString().split('T')[0];
+    const todayStr = getLocalDate();
     const { data, error } = await supabase
       .from('attendance_sessions')
       .select('slot_id, present_count, total_students')
