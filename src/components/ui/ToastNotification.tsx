@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../utils/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -102,7 +103,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
       style={[
         styles.container,
         {
-          top: insets.top + 8,
+          top: insets.top + verticalScale(8),
           transform: [{ translateY }],
           opacity,
         },
@@ -115,7 +116,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
       >
         <Ionicons
           name={colors.iconName as any}
-          size={22}
+          size={normalizeFont(22)}
           color={colors.icon}
         />
         <Text style={[styles.message, { color: '#FFFFFF' }]} numberOfLines={2}>
@@ -127,8 +128,8 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity onPress={handleDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="close" size={18} color="rgba(255,255,255,0.6)" />
+        <TouchableOpacity onPress={handleDismiss} hitSlop={{ top: scale(10), bottom: scale(10), left: scale(10), right: scale(10) }}>
+          <Ionicons name="close" size={normalizeFont(18)} color="rgba(255,255,255,0.6)" />
         </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
@@ -138,40 +139,40 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: scale(16),
+    right: scale(16),
     zIndex: 9999,
     elevation: 9999,
   },
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 14,
-    gap: 12,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(14),
+    gap: scale(12),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 10,
   },
   message: {
     flex: 1,
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '600',
-    lineHeight: 20,
+    lineHeight: verticalScale(20),
   },
   retryButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: scale(10),
+    paddingVertical: verticalScale(4),
     backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 6,
-    marginLeft: 8,
+    borderRadius: moderateScale(6),
+    marginLeft: scale(8),
   },
   retryText: {
     color: '#FFF',
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '700',
   },
 });

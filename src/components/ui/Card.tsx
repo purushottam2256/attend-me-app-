@@ -7,6 +7,7 @@ import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Colors, Layout } from '../../constants';
+import { moderateScale } from '../../utils/responsive';
 
 type CardVariant = 'default' | 'glass' | 'elevated';
 
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
 
     elevated: {
         shadowOpacity: 0.12,
-        shadowRadius: 12,
+        shadowRadius: moderateScale(12),
         elevation: 5,
     },
 

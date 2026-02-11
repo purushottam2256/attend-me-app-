@@ -31,6 +31,8 @@ export interface StudentAggregate {
   total_sessions: number;
   attendance_percentage: number;
   last_attendance_date: string | null;
+  student_mobile?: string;
+  parent_mobile?: string;
 }
 
 export interface PeriodAttendance {
@@ -511,6 +513,23 @@ export const getStudentByRollNo = async (
   return data;
 };
 
+// Get current semester from app_config
+export const getCurrentSemester = async (): Promise<string | null> => {
+  const { data, error } = await supabase
+    .from('app_config')
+    .select('value')
+    .eq('key', 'semester')
+    .single();
+
+  if (error) {
+    console.error('[InchargeService] Error fetching semester:', error);
+    return null; // Fail gracefully
+  }
+
+  // Value is JSONB, so it might be a string "1" or number 1.
+  return data?.value ? String(data.value).replace(/"/g, '') : null; 
+};
+
 export default {
   getClassStudents,
   getWatchlist,
@@ -523,4 +542,5 @@ export default {
   getPermissions,
   deletePermission,
   updatePermission,
+  getCurrentSemester,
 };

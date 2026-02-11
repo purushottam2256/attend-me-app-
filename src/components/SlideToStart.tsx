@@ -16,6 +16,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../utils/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -34,9 +35,9 @@ export const SlideToStart: React.FC<SlideToStartProps> = ({
 }) => {
   const [completed, setCompleted] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
-  const containerWidth = useRef(SCREEN_WIDTH - 80); // More conservative default
-  const thumbWidth = 48; // Match actual thumb width in styles
-  const padding = 4; // Padding on each side
+  const containerWidth = useRef(SCREEN_WIDTH - scale(80)); // More conservative default
+  const thumbWidth = scale(48); // Match actual thumb width in styles
+  const padding = scale(4); // Padding on each side
   const threshold = 0.6;
 
   // Calculate max slide with proper bounds
@@ -122,7 +123,7 @@ export const SlideToStart: React.FC<SlideToStartProps> = ({
         >
           <Ionicons 
             name={completed ? 'checkmark' : 'chevron-forward'} 
-            size={24} 
+            size={normalizeFont(24)} 
             color="#0D4A4A" 
           />
         </Animated.View>
@@ -134,7 +135,7 @@ export const SlideToStart: React.FC<SlideToStartProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: 56,
+    height: verticalScale(56),
     overflow: 'hidden',
   },
   disabled: {
@@ -142,32 +143,32 @@ const styles = StyleSheet.create({
   },
   track: {
     flex: 1,
-    borderRadius: 28,
+    borderRadius: moderateScale(28),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: scale(4),
     overflow: 'hidden',
   },
   label: {
     color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '600',
     letterSpacing: 0.3,
   },
   thumb: {
     position: 'absolute',
-    left: 4,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    left: scale(4),
+    width: scale(48),
+    height: scale(48),
+    borderRadius: moderateScale(24),
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowRadius: moderateScale(4),
     elevation: 3,
   },
 });

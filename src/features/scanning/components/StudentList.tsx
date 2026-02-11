@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { StudentCard } from './StudentCard';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 type StudentStatus = 'pending' | 'present' | 'absent' | 'od' | 'leave';
 
@@ -89,7 +90,7 @@ export const StudentList: React.FC<StudentListProps> = ({
       }]}>
         {showSearch ? (
           <View style={[styles.searchContainer, { backgroundColor: colors.searchBg }]}>
-            <Ionicons name="search" size={16} color={colors.searchIcon} />
+            <Ionicons name="search" size={normalizeFont(16)} color={colors.searchIcon} />
             <TextInput
               style={[styles.searchInput, { color: colors.searchText }]}
               placeholder="Search..."
@@ -99,7 +100,7 @@ export const StudentList: React.FC<StudentListProps> = ({
               autoFocus
             />
             <TouchableOpacity onPress={() => { setShowSearch(false); setSearchQuery(''); }}>
-              <Ionicons name="close-circle" size={18} color={colors.searchIcon} />
+              <Ionicons name="close-circle" size={normalizeFont(18)} color={colors.searchIcon} />
             </TouchableOpacity>
           </View>
         ) : (
@@ -108,7 +109,7 @@ export const StudentList: React.FC<StudentListProps> = ({
               style={[styles.searchButton, { backgroundColor: colors.searchBg }]} 
               onPress={() => setShowSearch(true)}
             >
-              <Ionicons name="search" size={18} color={colors.searchIcon} />
+              <Ionicons name="search" size={normalizeFont(18)} color={colors.searchIcon} />
             </TouchableOpacity>
 
             <View style={styles.statsGroup}>
@@ -139,7 +140,7 @@ export const StudentList: React.FC<StudentListProps> = ({
       <ScrollView 
         style={[styles.listContainer, { backgroundColor: colors.listBg }]}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: verticalScale(100) }]} // Add padding strictly to container
       >
         {/* Block A: Verified */}
         {verified.length > 0 && (
@@ -165,7 +166,7 @@ export const StudentList: React.FC<StudentListProps> = ({
         {/* Block B: Pending */}
         {pending.length > 0 && (
           <>
-            <View style={[styles.sectionHeader, verified.length > 0 && { marginTop: 16 }]}>
+            <View style={[styles.sectionHeader, verified.length > 0 && { marginTop: verticalScale(16) }]}>
               <View style={[styles.sectionDot, { backgroundColor: colors.sectionText }]} />
               <Text style={[styles.sectionTitle, { color: colors.sectionText }]}>
                 PENDING · {pending.length}
@@ -182,9 +183,6 @@ export const StudentList: React.FC<StudentListProps> = ({
             ))}
           </>
         )}
-
-        {/* Bottom padding for footer */}
-        <View style={{ height: 160 }} />
       </ScrollView>
     </View>
   );
@@ -198,14 +196,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(10),
     borderBottomWidth: 1,
   },
   searchButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: scale(34),
+    height: scale(34),
+    borderRadius: moderateScale(17),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -213,57 +211,57 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: scale(8),
+    borderRadius: moderateScale(10),
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(8),
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: normalizeFont(15),
   },
   statsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: scale(12),
   },
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: scale(4),
   },
   statValue: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '700',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '500',
   },
   statDivider: {
     width: 1,
-    height: 16,
+    height: verticalScale(16),
   },
   listContainer: {
     flex: 1,
   },
   listContent: {
-    paddingTop: 12,
+    paddingTop: verticalScale(12),
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 20,
-    paddingVertical: 6,
+    gap: scale(6),
+    paddingHorizontal: scale(20),
+    paddingVertical: verticalScale(6),
   },
   sectionDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: scale(5),
+    height: scale(5),
+    borderRadius: moderateScale(2.5),
   },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '600',
     letterSpacing: 0.8,
   },

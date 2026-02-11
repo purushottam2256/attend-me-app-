@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../utils/responsive';
 
 interface ConfirmationModalProps {
   visible: boolean;
@@ -56,7 +57,7 @@ export const ConfirmationModal = ({
                     ]}>
                         <Ionicons 
                             name={isDestructive ? "trash-outline" : "alert-circle-outline"} 
-                            size={32} 
+                            size={moderateScale(32)} 
                             color={isDestructive ? "#EF4444" : "#3B82F6"} 
                         />
                     </View>
@@ -108,50 +109,50 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
   },
   modalContainer: {
     width: '100%',
-    maxWidth: 340,
-    borderRadius: 24,
+    maxWidth: scale(340),
+    borderRadius: moderateScale(24),
     borderWidth: 1,
-    padding: 24,
+    padding: scale(24),
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: verticalScale(10) },
     shadowOpacity: 0.25,
-    shadowRadius: 20,
+    shadowRadius: moderateScale(20),
     elevation: 10,
   },
   iconBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: moderateScale(64),
+    height: moderateScale(64),
+    borderRadius: moderateScale(32),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   title: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
     textAlign: 'center',
   },
   message: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    lineHeight: verticalScale(22),
+    marginBottom: verticalScale(24),
   },
   footer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: scale(12),
     width: '100%',
   },
   button: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(12),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     
   },
   buttonText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '500',
   },
 });

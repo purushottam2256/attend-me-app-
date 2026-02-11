@@ -202,6 +202,13 @@ export function useAttendance({ classData, batch }: UseAttendanceOptions): UseAt
     return () => controller.abort();
   }, [fetchStudents]);
 
+  // Reset offline mode when network comes back online
+  useEffect(() => {
+    if (isOnline && isOfflineMode) {
+      setIsOfflineMode(false);
+    }
+  }, [isOnline]);
+
   // Update a single student's status
   const updateStudentStatus = useCallback((studentId: string, status: 'pending' | 'present' | 'absent' | 'od' | 'leave') => {
     setStudents(prev => prev.map(s => 

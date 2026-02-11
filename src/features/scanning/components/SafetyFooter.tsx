@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface SafetyFooterProps {
   presentCount: number;
@@ -30,12 +31,12 @@ export const SafetyFooter: React.FC<SafetyFooterProps> = ({
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + 12 }]}>
+    <View style={[styles.container, { paddingBottom: insets.bottom + verticalScale(12) }]}>
       <BlurView intensity={80} style={StyleSheet.absoluteFill} tint="light" />
       
       {/* Verification Line */}
       <View style={styles.verifyLine}>
-        <Ionicons name="shield-checkmark" size={16} color="#059669" />
+        <Ionicons name="shield-checkmark" size={normalizeFont(16)} color="#059669" />
         <Text style={styles.verifyText}>
           Verify Headcount: <Text style={styles.verifyCount}>{presentCount}</Text> Present, {' '}
           <Text style={styles.absentCount}>{absentCount}</Text> Absent
@@ -49,7 +50,7 @@ export const SafetyFooter: React.FC<SafetyFooterProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.rescanButton} onPress={onRescan} activeOpacity={0.7}>
-          <Ionicons name="refresh" size={18} color="#059669" />
+          <Ionicons name="refresh" size={normalizeFont(18)} color="#059669" />
           <Text style={styles.rescanButtonText}>Rescan</Text>
         </TouchableOpacity>
 
@@ -62,7 +63,7 @@ export const SafetyFooter: React.FC<SafetyFooterProps> = ({
           <Text style={styles.submitButtonText}>
             {isSubmitting ? 'Submitting...' : 'Submit Attendance'}
           </Text>
-          {!isSubmitting && <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />}
+          {!isSubmitting && <Ionicons name="checkmark-circle" size={normalizeFont(20)} color="#FFFFFF" />}
         </TouchableOpacity>
       </View>
     </View>
@@ -75,30 +76,30 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    paddingTop: verticalScale(12),
+    paddingHorizontal: scale(16),
+    borderTopLeftRadius: moderateScale(24),
+    borderTopRightRadius: moderateScale(24),
     overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
+    shadowOffset: { width: 0, height: verticalScale(-4) },
     shadowOpacity: 0.1,
-    shadowRadius: 16,
+    shadowRadius: moderateScale(16),
     elevation: 12,
   },
   verifyLine: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    marginBottom: 12,
+    gap: scale(8),
+    paddingVertical: verticalScale(10),
+    marginBottom: verticalScale(12),
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.06)',
   },
   verifyText: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '500',
     color: '#374151',
   },
@@ -112,30 +113,30 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: scale(10),
   },
   cancelButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    borderRadius: 14,
+    paddingVertical: verticalScale(14),
+    paddingHorizontal: scale(18),
+    borderRadius: moderateScale(14),
     backgroundColor: '#F3F4F6',
   },
   cancelButtonText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '600',
     color: '#6B7280',
   },
   rescanButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
+    gap: scale(6),
+    paddingVertical: verticalScale(14),
+    paddingHorizontal: scale(16),
+    borderRadius: moderateScale(14),
     backgroundColor: 'rgba(5, 150, 105, 0.1)',
   },
   rescanButtonText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '600',
     color: '#059669',
   },
@@ -144,16 +145,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
+    gap: scale(8),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(14),
     backgroundColor: '#059669',
   },
   submitButtonDisabled: {
     backgroundColor: '#9CA3AF',
   },
   submitButtonText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '700',
     color: '#FFFFFF',
   },

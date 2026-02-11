@@ -3,6 +3,7 @@ import { TouchableOpacity, View, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useNavigation } from '@react-navigation/native';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../utils/responsive';
 
 interface BellIconProps {
   style?: any;
@@ -10,7 +11,7 @@ interface BellIconProps {
   color?: string;
 }
 
-export const BellIcon = ({ style, size = 24, color = '#FFF' }: BellIconProps) => {
+export const BellIcon = ({ style, size = moderateScale(24), color = '#FFF' }: BellIconProps) => {
   const { unreadCount } = useNotifications();
   const navigation = useNavigation();
   const handlePress = () => {
@@ -39,27 +40,27 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -5,
-    right: -5,
+    top: verticalScale(-5),
+    right: scale(-5),
     backgroundColor: '#EF4444',
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
+    borderRadius: moderateScale(10),
+    minWidth: scale(18),
+    height: scale(18),
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: scale(4),
     borderWidth: 1.5,
     borderColor: '#0D4A4A', // Match header bg for cutout effect
   },
   badgeText: {
     color: '#FFF',
-    fontSize: 10,
+    fontSize: normalizeFont(10),
     fontWeight: '700',
   },
   dot: { // Deprecated
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: moderateScale(4),
     backgroundColor: '#FFFFFF',
   }
 });

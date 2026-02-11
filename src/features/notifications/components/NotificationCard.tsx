@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { formatDistanceToNow } from 'date-fns';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 const safeDate = (dateString: any) => {
     if (!dateString) return new Date();
@@ -105,7 +106,7 @@ export const NotificationCard = React.memo(({
           }}
           activeOpacity={0.7}
         >
-          <Ionicons name="trash-outline" size={24} color="#FFF" />
+          <Ionicons name="trash-outline" size={normalizeFont(24)} color="#FFF" />
         </TouchableOpacity>
       </View>
     );
@@ -134,13 +135,13 @@ export const NotificationCard = React.memo(({
             borderColor: isSelected ? '#3DDC97' : colors.textSecondary,
           }
         ]}>
-          {isSelected && <Ionicons name="checkmark" size={14} color="#FFF" />}
+          {isSelected && <Ionicons name="checkmark" size={normalizeFont(14)} color="#FFF" />}
         </View>
       )}
 
       {/* Icon */}
       <View style={[styles.iconContainer, { backgroundColor: getIconColor() + '20' }]}>
-        <Ionicons name={getIcon()} size={18} color={getIconColor()} />
+        <Ionicons name={getIcon()} size={normalizeFont(18)} color={getIconColor()} />
       </View>
 
       {/* Content */}
@@ -174,7 +175,7 @@ export const NotificationCard = React.memo(({
             ]}>
               <Ionicons 
                 name={status === 'accepted' ? 'checkmark' : 'close'} 
-                size={10} 
+                size={normalizeFont(10)} 
                 color="#FFF" 
               />
             </View>
@@ -206,28 +207,28 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: scale(12),
     borderBottomWidth: 0.5,
-    minHeight: 50,
+    minHeight: verticalScale(50),
   },
   checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: scale(18),
+    height: scale(18),
+    borderRadius: moderateScale(9),
     borderWidth: 1.5,
-    marginRight: 10,
+    marginRight: scale(10),
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconContainer: {
-    width: 32, 
-    height: 32,
-    borderRadius: 16,
+    width: scale(32), 
+    height: scale(32),
+    borderRadius: moderateScale(16),
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)', // Subtle background for icon
+    marginRight: scale(10),
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   content: {
     flex: 1,
@@ -237,47 +238,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
   },
   title: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '600',
     flex: 1,
   },
   time: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '400',
-    marginLeft: 8,
+    marginLeft: scale(8),
   },
   bodyRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: moderateScale(4),
+    marginRight: scale(6),
   },
   body: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     flex: 1,
   },
   statusBadge: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: scale(16),
+    height: scale(16),
+    borderRadius: moderateScale(8),
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+    marginLeft: scale(8),
   },
   deleteAction: {
     justifyContent: 'center',
     alignItems: 'flex-end',
-    width: 80, // Explicit width for Swipeable
+    width: scale(80),
   },
   deleteButton: {
-    width: 80, // Match action width
+    width: scale(80),
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',

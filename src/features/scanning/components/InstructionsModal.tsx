@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface InstructionsModalProps {
   visible: boolean;
@@ -51,7 +52,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                 {instructions.map((item, index) => (
                   <View key={index} style={styles.instructionItem}>
                     <View style={styles.iconContainer}>
-                      <Ionicons name={item.icon as any} size={20} color="#059669" />
+                      <Ionicons name={item.icon as any} size={normalizeFont(20)} color="#059669" />
                     </View>
                     <Text style={styles.instructionText}>{item.text}</Text>
                   </View>
@@ -67,7 +68,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                 )}
                 <TouchableOpacity style={styles.primaryButton} onPress={onClose}>
                   <Text style={styles.primaryButtonText}>Got it</Text>
-                  <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                  <Ionicons name="checkmark" size={normalizeFont(20)} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -83,88 +84,88 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
   },
   modalContainer: {
     width: '100%',
-    maxWidth: 360,
+    maxWidth: scale(360),
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: moderateScale(24),
+    padding: scale(24),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
+    shadowOffset: { width: 0, height: verticalScale(16) },
     shadowOpacity: 0.25,
-    shadowRadius: 32,
+    shadowRadius: moderateScale(32),
     elevation: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 20,
+    gap: scale(10),
+    marginBottom: verticalScale(20),
   },
   emoji: {
-    fontSize: 24,
+    fontSize: normalizeFont(24),
   },
   title: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
   },
   instructionsList: {
-    gap: 14,
-    marginBottom: 24,
+    gap: verticalScale(14),
+    marginBottom: verticalScale(24),
   },
   instructionItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: scale(12),
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: moderateScale(10),
     backgroundColor: 'rgba(5, 150, 105, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   instructionText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '500',
     color: '#374151',
-    lineHeight: 20,
-    paddingTop: 8,
+    lineHeight: verticalScale(20),
+    paddingTop: verticalScale(8),
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: scale(12),
   },
   secondaryButton: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: verticalScale(14),
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: moderateScale(14),
     backgroundColor: '#F3F4F6',
   },
   secondaryButtonText: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '600',
     color: '#6B7280',
   },
   primaryButton: {
     flex: 1,
     flexDirection: 'row',
-    paddingVertical: 14,
+    paddingVertical: verticalScale(14),
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    borderRadius: 14,
+    gap: scale(6),
+    borderRadius: moderateScale(14),
     backgroundColor: '#059669',
   },
   primaryButtonText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '700',
     color: '#FFFFFF',
   },

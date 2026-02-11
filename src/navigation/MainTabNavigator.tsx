@@ -41,8 +41,14 @@ interface MainTabNavigatorProps {
   onLogout: () => void;
 }
 
+// Custom Scan Button Interface
+interface ScanButtonProps {
+  onPress?: () => void;
+  accessibilityState?: { selected?: boolean };
+}
+
 // Custom Floating Scan Button
-const ScanButton: React.FC<BottomTabBarButtonProps> = ({ onPress, accessibilityState }) => {
+const ScanButton: React.FC<ScanButtonProps> = ({ onPress, accessibilityState }) => {
   const focused = accessibilityState?.selected;
   const scaleValue = React.useRef(new Animated.Value(1)).current;
 
@@ -74,7 +80,7 @@ const ScanButton: React.FC<BottomTabBarButtonProps> = ({ onPress, accessibilityS
         focused && styles.scanButtonFocused,
         { transform: [{ scale: scaleValue }] }
       ]}>
-        <Ionicons name="scan" size={24} color="#FFFFFF" />
+        <Ionicons name="bluetooth" size={24} color="#FFFFFF" />
       </Animated.View>
       <Text style={styles.scanLabel}>Scan</Text>
     </TouchableOpacity>
@@ -101,6 +107,107 @@ const DelegateScreen: React.FC = () => {
 
 // MyClassScreen is imported from features/incharge
 
+// Custom Tab Bar for precise layout control
+const CustomTabBar = ({ state, descriptors, navigation, insets }: any) => {
+  const { isDark } = useTheme();
+  
+  // Hide docker when Scan screen is active
+  const currentRoute = state.routes[state.index]?.name;
+  if (currentRoute === 'Scan') return null;
+  
+  // Robust bottom offset logic
+  // If insets.bottom > 0 (gesture nav), use it.
+  // If insets.bottom === 0 (button nav), add generous padding (24px) to clear buttons.
+  const bottomOffset = Platform.OS === 'android' 
+    ? (insets.bottom > 0 ? insets.bottom : 16) + 20 
+    : Math.max(insets.bottom, 12) + 12;
+
+  return (
+    <View style={[
+      styles.floatingDock, 
+      { 
+        bottom: bottomOffset,
+        backgroundColor: isDark ? 'rgba(13, 74, 74, 0.92)' : 'rgba(255, 255, 255, 0.92)',
+        borderColor: isDark ? 'rgba(61, 220, 151, 0.15)' : 'rgba(0, 0, 0, 0.06)',
+        borderWidth: 1,
+      }
+    ]}>
+      <BlurView 
+        intensity={isDark ? 60 : 80} 
+        style={StyleSheet.absoluteFill}
+        tint={isDark ? 'dark' : 'light'}
+      />
+      
+      <View style={styles.tabItemsContainer}>
+        {state.routes.map((route: any, index: number) => {
+          const { options } = descriptors[route.key];
+          const isFocused = state.index === index;
+          
+          // Handle hidden tabs (MyClass/Profile logic) via options.tabBarButton
+          // If tabBarButton returns null, we shouldn't render.
+          // In standard nav, it passes props, but here we can just check the option itself if we set it to a function returning null.
+          // However, we set it to `undefined` or `() => null`.
+          if (options.tabBarButton && options.tabBarButton() === null) {
+            return null;
+          }
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          // Special Scan Button Case
+          if (route.name === 'Scan') {
+             return (
+               <View key={route.key} style={styles.scanButtonWrapper}>
+                 <ScanButton 
+                   onPress={onPress} 
+                   accessibilityState={{ selected: isFocused }} 
+                 />
+               </View>
+             );
+          }
+
+          // Standard Tab Item
+          let iconName: any = 'ellipse';
+          if (route.name === 'Home') iconName = isFocused ? 'home' : 'home-outline';
+          else if (route.name === 'Delegate') iconName = isFocused ? 'swap-horizontal' : 'swap-horizontal-outline';
+          else if (route.name === 'History') iconName = isFocused ? 'time' : 'time-outline';
+          else if (route.name === 'MyClass') iconName = isFocused ? 'people' : 'people-outline';
+          else if (route.name === 'Profile') iconName = isFocused ? 'person' : 'person-outline';
+
+          const color = isFocused 
+            ? (isDark ? '#3DDC97' : '#0D4A4A') 
+            : (isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)');
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              onPress={onPress}
+              style={styles.tabItem}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={iconName} size={23} color={color} />
+              <Text style={[styles.tabLabel, { color }]}>
+                {options.tabBarLabel || route.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+};
+
 export const MainTabNavigator: React.FC<MainTabNavigatorProps> = ({ userName, userRole, onLogout }) => {
   const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -108,61 +215,13 @@ export const MainTabNavigator: React.FC<MainTabNavigatorProps> = ({ userName, us
   // Class incharges and lab incharges see MyClass instead of Profile in dock
   const showMyClass = userRole === 'class_incharge' || userRole === 'lab_incharge';
   
-  const bottomOffset = Math.max(insets.bottom, 12) + 8;
-
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      tabBar={(props) => <CustomTabBar {...props} insets={insets} />}
+      screenOptions={{
         headerShown: false,
-        tabBarIcon: ({ focused, color }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
-
-          switch (route.name) {
-            case 'Home':
-              iconName = focused ? 'home' : 'home-outline';
-              break;
-            case 'Delegate':
-              iconName = focused ? 'swap-horizontal' : 'swap-horizontal-outline';
-              break;
-            case 'Scan':
-              iconName = 'scan';
-              break;
-            case 'History':
-              iconName = focused ? 'time' : 'time-outline';
-              break;
-            case 'MyClass':
-              iconName = focused ? 'people' : 'people-outline';
-              break;
-            case 'Profile':
-              iconName = focused ? 'person' : 'person-outline';
-              break;
-            default:
-              iconName = 'ellipse';
-          }
-
-          return <Ionicons name={iconName} size={23} color={color} />;
-        },
-        tabBarActiveTintColor: isDark ? '#3DDC97' : '#0D4A4A',
-        tabBarInactiveTintColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
-        tabBarStyle: [
-          styles.floatingDock,
-          { 
-            bottom: bottomOffset,
-            backgroundColor: isDark ? 'rgba(13, 74, 74, 0.92)' : 'rgba(255, 255, 255, 0.92)',
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(61, 220, 151, 0.15)' : 'rgba(0, 0, 0, 0.06)',
-          },
-        ],
-        tabBarLabelStyle: styles.tabLabel,
-        tabBarItemStyle: styles.tabItem,
-        tabBarBackground: () => (
-          <BlurView 
-            intensity={isDark ? 60 : 80} 
-            style={[StyleSheet.absoluteFill, styles.blurContainer]}
-            tint={isDark ? 'dark' : 'light'}
-          />
-        ),
-      })}
+        tabBarStyle: { display: 'none' }, // Hide default tab bar completely
+      }}
     >
       <Tab.Screen 
         name="Home"
@@ -181,10 +240,8 @@ export const MainTabNavigator: React.FC<MainTabNavigatorProps> = ({ userName, us
         name="Scan" 
         component={ScanScreen}
         options={{
-          tabBarLabel: () => null,
-          tabBarIcon: () => null,
-          tabBarButton: (props) => <ScanButton {...props} />,
-          tabBarStyle: { display: 'none' },
+          tabBarLabel: 'Scan',
+          // No special options needed here as CustomTabBar handles it by name 'Scan'
         }}
       />
       
@@ -200,7 +257,7 @@ export const MainTabNavigator: React.FC<MainTabNavigatorProps> = ({ userName, us
         component={MyClassHubScreen}
         options={{ 
           tabBarLabel: 'My Class',
-          tabBarButton: showMyClass ? undefined : () => null, // Hide from dock if not incharge
+          tabBarButton: showMyClass ? undefined : () => null, 
         }}
       />
       
@@ -209,7 +266,7 @@ export const MainTabNavigator: React.FC<MainTabNavigatorProps> = ({ userName, us
         name="Profile"
         options={{ 
           tabBarLabel: 'Profile',
-          tabBarButton: showMyClass ? () => null : undefined, // Hide from dock for incharges
+          tabBarButton: showMyClass ? () => null : undefined, 
         }}
       >
         {() => <ProfileScreen userName={userName} onLogout={onLogout} />}
@@ -223,7 +280,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    height: 70,
+    height: 70, 
     borderRadius: 35,
     borderTopWidth: 0,
     elevation: 20,
@@ -231,7 +288,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 30,
-    paddingHorizontal: 4,
+    paddingHorizontal: 4, // Moderate padding
     overflow: 'hidden',
   },
   blurContainer: {
@@ -239,25 +296,42 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 4, // Small gap between icon and label
     letterSpacing: 0.2,
+  },
+  tabItemsContainer: {
+    flexDirection: 'row',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   tabItem: {
     flex: 1,
-    paddingTop: 8,
-    paddingBottom: 8,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 8, // Ensure visual centering
+  },
+  scanButtonWrapper: {
+    flex: 1,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   scanButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    width: 60,
+    height: 60,
+    marginTop: -5, // Lowered even more as requested (was -15)
   },
   scanButton: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 56, 
+    height: 56,
+    borderRadius: 26,
     backgroundColor: '#0D4A4A',
     justifyContent: 'center',
     alignItems: 'center',

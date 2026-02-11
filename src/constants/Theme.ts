@@ -424,18 +424,20 @@ export const Animations = {
 // TYPOGRAPHY
 // =============================================================================
 
+import { scale, verticalScale, moderateScale, normalizeFont } from '../utils/responsive';
+
 export const Typography = {
   size: {
-    '2xs': 10,
-    xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
-    xl: 20,
-    '2xl': 24,
-    '3xl': 30,
-    '4xl': 36,
-    '5xl': 48,
+    '2xs': normalizeFont(10),
+    xs: normalizeFont(12),
+    sm: normalizeFont(14),
+    base: normalizeFont(16),
+    lg: normalizeFont(18),
+    xl: normalizeFont(20),
+    '2xl': normalizeFont(24),
+    '3xl': normalizeFont(30),
+    '4xl': normalizeFont(36),
+    '5xl': normalizeFont(48),
   },
   lineHeight: {
     tight: 1.2,
@@ -459,92 +461,92 @@ export const Components = {
   // Buttons
   button: {
     height: {
-      sm: 40,
-      md: 48,
-      lg: 56,
+      sm: verticalScale(40),
+      md: verticalScale(48),
+      lg: verticalScale(56),
     },
     padding: {
-      sm: 16,
-      md: 20,
-      lg: 24,
+      sm: scale(16),
+      md: scale(20),
+      lg: scale(24),
     },
     radius: Radius['2xl'],
     iconSize: {
-      sm: 18,
-      md: 20,
-      lg: 24,
+      sm: moderateScale(18),
+      md: moderateScale(20),
+      lg: moderateScale(24),
     },
   },
   
   // Input fields
   input: {
-    height: 56,
-    padding: 16,
+    height: verticalScale(56),
+    padding: scale(16),
     radius: Radius.xl,
-    fontSize: 17,
+    fontSize: normalizeFont(17),
   },
   
   // Cards
   card: {
     padding: {
-      sm: 12,
-      md: 16,
-      lg: 20,
+      sm: scale(12),
+      md: scale(16),
+      lg: scale(20),
     },
     radius: Radius['3xl'],
-    gap: 12,
+    gap: scale(12),
   },
   
   // Header
   header: {
-    height: 60,
-    paddingHorizontal: 20,
-    titleSize: 17,
+    height: verticalScale(60),
+    paddingHorizontal: scale(20),
+    titleSize: normalizeFont(17),
   },
   
   // Tab bar
   tabBar: {
-    height: 72,
-    iconSize: 24,
-    labelSize: 10,
-    radius: 36,
+    height: verticalScale(72),
+    iconSize: moderateScale(24),
+    labelSize: normalizeFont(10),
+    radius: moderateScale(36),
   },
   
   // Avatar
   avatar: {
-    xs: 28,
-    sm: 36,
-    md: 44,
-    lg: 64,
-    xl: 88,
+    xs: moderateScale(28),
+    sm: moderateScale(36),
+    md: moderateScale(44),
+    lg: moderateScale(64),
+    xl: moderateScale(88),
   },
   
   // List items
   listItem: {
-    height: 56,
-    padding: 16,
-    iconSize: 24,
+    height: verticalScale(56),
+    padding: scale(16),
+    iconSize: moderateScale(24),
   },
   
   // Modal
   modal: {
     radius: Radius['4xl'],
-    padding: 24,
+    padding: scale(24),
   },
   
   // Badge
   badge: {
-    height: 24,
-    padding: 8,
+    height: verticalScale(24),
+    padding: scale(8),
     radius: Radius.full,
-    fontSize: 12,
+    fontSize: normalizeFont(12),
   },
   
   // Screen
   screen: {
-    padding: 20,
-    headerGap: 24,
-    sectionGap: 32,
+    padding: scale(20),
+    headerGap: verticalScale(24),
+    sectionGap: verticalScale(32),
   },
 } as const;
 

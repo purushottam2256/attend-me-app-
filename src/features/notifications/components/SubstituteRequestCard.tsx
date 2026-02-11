@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { isBefore, startOfDay, parseISO, formatDistanceToNow } from 'date-fns';
@@ -81,7 +82,7 @@ export const SubstituteRequestCard: React.FC<SubstituteRequestCardProps> = ({
                     <View style={styles.badge}>
                         <Ionicons 
                             name={isSwap ? "swap-horizontal" : "person-add"} 
-                            size={14} 
+                            size={normalizeFont(14)} 
                             color="#3DDC97" 
                         />
                         <Text style={styles.badgeText}>{title}</Text>
@@ -110,7 +111,7 @@ export const SubstituteRequestCard: React.FC<SubstituteRequestCardProps> = ({
                         ]}>
                             <Ionicons 
                                 name={isExpired ? "time" : (request.status === 'accepted' ? "checkmark-circle" : "close-circle")} 
-                                size={16} 
+                                size={normalizeFont(16)} 
                                 color={isExpired ? subTextColor : (request.status === 'accepted' ? accentColor : '#EF4444')} 
                             />
                             <Text style={[
@@ -138,104 +139,104 @@ export const SubstituteRequestCard: React.FC<SubstituteRequestCardProps> = ({
 
 const styles = StyleSheet.create({
     container: { 
-        marginHorizontal: 16,
-        marginBottom: 12, 
-        borderRadius: 16, 
+        marginHorizontal: scale(16),
+        marginBottom: verticalScale(12), 
+        borderRadius: moderateScale(16), 
         shadowColor: '#0D4A4A',
-        shadowOffset: { width: 0, height: 6 }, 
+        shadowOffset: { width: 0, height: verticalScale(6) }, 
         shadowOpacity: 0.2, 
-        shadowRadius: 12, 
+        shadowRadius: moderateScale(12), 
         elevation: 6 
     },
     card: { 
-        padding: 8,
-        borderRadius: 12,
+        padding: scale(8),
+        borderRadius: moderateScale(12),
         borderWidth: 0.5,
     },
     header: { 
         flexDirection: 'row', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginBottom: 2
+        marginBottom: verticalScale(2)
     },
     badge: { 
         flexDirection: 'row', 
         alignItems: 'center', 
         backgroundColor: 'rgba(61, 220, 151, 0.2)', 
-        paddingHorizontal: 6, 
-        paddingVertical: 2, 
-        borderRadius: 100, 
-        gap: 4 
+        paddingHorizontal: scale(6), 
+        paddingVertical: verticalScale(2), 
+        borderRadius: moderateScale(100), 
+        gap: scale(4) 
     },
     badgeText: { 
-        fontSize: 9, 
+        fontSize: normalizeFont(9), 
         fontWeight: '700',
         color: '#3DDC97',
     },
     timeAgo: { 
-        fontSize: 10,
+        fontSize: normalizeFont(10),
         fontWeight: '500'
     },
     content: { 
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 8
+        marginBottom: verticalScale(8)
     },
     facultyName: { 
-        fontSize: 14,
+        fontSize: normalizeFont(14),
         fontWeight: '600', 
     },
     classDetails: { 
-        fontSize: 12,
+        fontSize: normalizeFont(12),
         fontWeight: '400', 
     },
     actions: { 
         flexDirection: 'row', 
         justifyContent: 'flex-end',
-        gap: 12,
-        marginTop: 4
+        gap: scale(12),
+        marginTop: verticalScale(4)
     },
     declineBtn: { 
-        paddingHorizontal: 16,
-        paddingVertical: 6,
-        borderRadius: 100, 
+        paddingHorizontal: scale(16),
+        paddingVertical: verticalScale(6),
+        borderRadius: moderateScale(100), 
         justifyContent: 'center', 
         alignItems: 'center',
         borderWidth: 1, 
     },
     declineBtnText: {
         fontWeight: '600',
-        fontSize: 12
+        fontSize: normalizeFont(12)
     },
     acceptBtn: { 
-        paddingHorizontal: 20,
-        paddingVertical: 6,
-        borderRadius: 100, 
+        paddingHorizontal: scale(20),
+        paddingVertical: verticalScale(6),
+        borderRadius: moderateScale(100), 
         justifyContent: 'center', 
         alignItems: 'center' 
     },
     acceptBtnText: { 
         color: '#000', 
         fontWeight: '700', 
-        fontSize: 12 
+        fontSize: normalizeFont(12) 
     },
     statusRow: { 
         flexDirection: 'row', 
-        justifyContent: 'flex-end', // Aligned to right 
-        marginTop: 4 
+        justifyContent: 'flex-end',
+        marginTop: verticalScale(4) 
     },
     statusBadge: { 
         flexDirection: 'row', 
         alignItems: 'center', 
-        gap: 6, 
-        paddingHorizontal: 16, 
-        paddingVertical: 10, 
-        borderRadius: 20 
+        gap: scale(6), 
+        paddingHorizontal: scale(16), 
+        paddingVertical: verticalScale(10), 
+        borderRadius: moderateScale(20) 
     },
     statusText: { 
         fontWeight: '800', 
-        fontSize: 12, 
+        fontSize: normalizeFont(12), 
         letterSpacing: 0.8 
     }
 });

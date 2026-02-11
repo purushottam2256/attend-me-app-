@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { supabase } from '../../../config/supabase';
 import { NotificationCard } from '../components/NotificationCard';
@@ -46,7 +47,7 @@ const ListItem = React.memo(({
         >
           {isSelected && (
              <View style={styles.requestSelectedBadge}>
-                <Ionicons name="checkmark" size={12} color="#0D4A4A" />
+                <Ionicons name="checkmark" size={normalizeFont(12)} color="#0D4A4A" />
              </View>
           )}
           <View style={{ flex: 1, opacity: isSelected ? 1 : 0.9, pointerEvents: 'none' }}>
@@ -63,16 +64,16 @@ const ListItem = React.memo(({
     return (
       <Swipeable
         renderRightActions={(_progress, _dragX) => (
-          <View style={{ width: 80, justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+          <View style={{ width: scale(80), justifyContent: 'center', alignItems: 'center', marginBottom: verticalScale(12) }}>
             <TouchableOpacity 
               style={{
-                width: 60, height: 60, borderRadius: 30, backgroundColor: '#EF4444', 
+                width: scale(60), height: scale(60), borderRadius: moderateScale(30), backgroundColor: '#EF4444', 
                 justifyContent: 'center', alignItems: 'center',
-                shadowColor: '#EF4444', shadowOpacity: 0.3, shadowRadius: 5
+                shadowColor: '#EF4444', shadowOpacity: 0.3, shadowRadius: moderateScale(5)
               }}
               onPress={() => onAction(item.id, 'delete')}
             >
-              <Ionicons name="trash-outline" size={24} color="#FFF" />
+              <Ionicons name="trash-outline" size={normalizeFont(24)} color="#FFF" />
             </TouchableOpacity>
           </View>
         )}
@@ -705,7 +706,7 @@ export const NotificationScreen = ({ navigation }: any) => {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <View style={[styles.emptyIcon, { backgroundColor: 'rgba(13, 74, 74, 0.1)' }]}>
-        <Ionicons name="notifications-off-outline" size={48} color="#0D4A4A" />
+        <Ionicons name="notifications-off-outline" size={normalizeFont(48)} color="#0D4A4A" />
       </View>
       <Text style={[styles.emptyTitle, { color: isDark ? '#FFF' : '#0F172A' }]}>All caught up</Text>
       <Text style={[styles.emptySubtitle, { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15, 23, 42, 0.5)' }]}>
@@ -737,11 +738,11 @@ export const NotificationScreen = ({ navigation }: any) => {
             >
               <Ionicons 
                 name={selectionMode ? "close" : "chevron-back"} 
-                size={24} 
+                size={normalizeFont(24)} 
                 color="#FFFFFF" 
               />
             </TouchableOpacity>
-            <View style={{ marginLeft: 12 }}>
+            <View style={{ marginLeft: scale(12) }}>
               <Text style={styles.headerTitle}>
                 {selectionMode ? `${selectedIds.size} Selected` : 'Notifications'}
               </Text>
@@ -760,7 +761,7 @@ export const NotificationScreen = ({ navigation }: any) => {
                   onPress={selectAll} 
                   style={styles.headerBtn}
                 >
-                  <Ionicons name="checkmark-done" size={22} color="#FFFFFF" />
+                  <Ionicons name="checkmark-done" size={normalizeFont(22)} color="#FFFFFF" />
                 </TouchableOpacity>
               </>
             ) : (
@@ -769,7 +770,7 @@ export const NotificationScreen = ({ navigation }: any) => {
                   onPress={handleMarkAllRead} 
                   style={styles.headerBtn}
                 >
-                  <Ionicons name="checkmark-done" size={22} color="#FFFFFF" />
+                  <Ionicons name="checkmark-done" size={normalizeFont(22)} color="#FFFFFF" />
                 </TouchableOpacity>
               </>
             )}
@@ -792,9 +793,9 @@ export const NotificationScreen = ({ navigation }: any) => {
         <Text style={{ 
           textAlign: 'center', 
           color: 'rgba(255,255,255,0.6)', 
-          fontSize: 10, 
-          marginTop: 8,
-          marginBottom: 4 
+          fontSize: normalizeFont(10), 
+          marginTop: verticalScale(8),
+          marginBottom: verticalScale(4) 
         }}>
          -- Swipe left to delete.
         </Text>
@@ -879,30 +880,30 @@ export const NotificationScreen = ({ navigation }: any) => {
       {selectionMode && selectedIds.size > 0 && (
         <View style={{
           position: 'absolute',
-          bottom: insets.bottom + 24,
-          left: 20,
-          right: 20,
+          bottom: insets.bottom + verticalScale(24),
+          left: scale(20),
+          right: scale(20),
         }}>
           <TouchableOpacity
             onPress={deleteSelected}
             activeOpacity={0.9}
             style={{
               backgroundColor: '#DC2626',
-              paddingVertical: 16,
-              borderRadius: 16,
+              paddingVertical: verticalScale(16),
+              borderRadius: moderateScale(16),
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
+              gap: scale(8),
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
+              shadowOffset: { width: 0, height: verticalScale(4) },
               shadowOpacity: 0.3,
-              shadowRadius: 8,
+              shadowRadius: moderateScale(8),
               elevation: 8,
             }}
           >
-            <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>
+            <Ionicons name="trash-outline" size={normalizeFont(20)} color="#FFFFFF" />
+            <Text style={{ color: '#FFFFFF', fontSize: normalizeFont(16), fontWeight: '700' }}>
               Delete ({selectedIds.size})
             </Text>
           </TouchableOpacity>
@@ -917,108 +918,108 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerGradient: {
-    paddingBottom: 12,
+    paddingBottom: verticalScale(12),
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingHorizontal: scale(16),
+    paddingTop: verticalScale(8),
+    paddingBottom: verticalScale(16),
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: moderateScale(14),
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: normalizeFont(24),
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '500',
     color: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
+    marginTop: verticalScale(2),
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 10,
+    gap: scale(10),
   },
   headerBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: moderateScale(14),
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   filterContainer: {
-    maxHeight: 44,
+    maxHeight: verticalScale(44),
   },
   filterScroll: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 8,
+    paddingHorizontal: scale(16),
+    paddingBottom: verticalScale(12),
+    gap: scale(8),
     flexDirection: 'row',
   },
   filterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: scale(14),
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(20),
     borderWidth: 1,
-    gap: 6,
+    gap: scale(6),
   },
   filterText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
   },
   filterBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    minWidth: scale(18),
+    height: scale(18),
+    borderRadius: moderateScale(9),
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: scale(5),
   },
   filterBadgeText: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '700',
   },
   listContent: {
-    paddingTop: 16,
-    paddingBottom: 100,
+    paddingTop: verticalScale(16),
+    paddingBottom: verticalScale(100),
   },
   emptyList: {
     flex: 1,
     justifyContent: 'center',
   },
   sectionHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   selectionWrapper: {
-    marginBottom: 12,
-    marginHorizontal: 16,
-    borderRadius: 16,
+    marginBottom: verticalScale(12),
+    marginHorizontal: scale(16),
+    borderRadius: moderateScale(16),
   },
   selectedCardWrapper: {
     borderWidth: 1.5,
@@ -1027,11 +1028,11 @@ const styles = StyleSheet.create({
   },
   requestSelectedBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    top: verticalScale(12),
+    right: scale(12),
+    width: scale(22),
+    height: scale(22),
+    borderRadius: moderateScale(11),
     backgroundColor: '#3DDC97',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1040,25 +1041,25 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: scale(40),
   },
   emptyIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: scale(100),
+    height: scale(100),
+    borderRadius: moderateScale(50),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
     letterSpacing: -0.3,
   },
   emptySubtitle: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: verticalScale(22),
   },
 });

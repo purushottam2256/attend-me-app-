@@ -8,9 +8,11 @@ interface SlideToLogoutProps {
   onLogout: () => void;
 }
 
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
+
 const { width } = Dimensions.get('window');
-const BUTTON_HEIGHT = 56;
-const BUTTON_WIDTH = width - 80;
+const BUTTON_HEIGHT = verticalScale(56);
+const BUTTON_WIDTH = width - scale(80);
 const SWIPE_THRESHOLD = BUTTON_WIDTH * 0.7;
 
 export const SlideToLogout: React.FC<SlideToLogoutProps> = ({ onLogout }) => {
@@ -22,7 +24,7 @@ export const SlideToLogout: React.FC<SlideToLogoutProps> = ({ onLogout }) => {
       onStartShouldSetPanResponder: () => true,
       onPanResponderMove: (_, gestureState) => {
         if (completed) return;
-        const newX = Math.max(0, Math.min(gestureState.dx, BUTTON_WIDTH - BUTTON_HEIGHT - 4));
+        const newX = Math.max(0, Math.min(gestureState.dx, BUTTON_WIDTH - BUTTON_HEIGHT - scale(4)));
         pan.setValue(newX);
       },
       onPanResponderRelease: (_, gestureState) => {
@@ -32,7 +34,7 @@ export const SlideToLogout: React.FC<SlideToLogoutProps> = ({ onLogout }) => {
           // Success
           setCompleted(true);
           Animated.spring(pan, {
-            toValue: BUTTON_WIDTH - BUTTON_HEIGHT - 4,
+            toValue: BUTTON_WIDTH - BUTTON_HEIGHT - scale(4),
             useNativeDriver: false,
           }).start();
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -89,7 +91,7 @@ export const SlideToLogout: React.FC<SlideToLogoutProps> = ({ onLogout }) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: verticalScale(20),
   },
   track: {
     width: BUTTON_WIDTH,
@@ -104,22 +106,22 @@ const styles = StyleSheet.create({
   },
   thumb: {
     position: 'absolute',
-    left: 2,
-    width: BUTTON_HEIGHT - 4,
-    height: BUTTON_HEIGHT - 4,
-    borderRadius: (BUTTON_HEIGHT - 4) / 2,
+    left: scale(2),
+    width: BUTTON_HEIGHT - scale(4),
+    height: BUTTON_HEIGHT - scale(4),
+    borderRadius: (BUTTON_HEIGHT - scale(4)) / 2,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: moderateScale(4),
     elevation: 3,
   },
   text: {
     color: '#EF4444',
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
     letterSpacing: 0.5,
   },

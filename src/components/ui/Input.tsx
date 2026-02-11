@@ -15,6 +15,7 @@ import {
     ViewStyle,
 } from 'react-native';
 import { Colors, Fonts, Layout } from '../../constants';
+import { scale, verticalScale } from '../../utils/responsive';
 
 interface InputProps extends Omit<TextInputProps, 'style'> {
     label: string;
@@ -60,7 +61,7 @@ export const Input: React.FC<InputProps> = ({
 
     const labelStyle = {
         position: 'absolute' as const,
-        left: leftIcon ? 44 : Layout.input.paddingHorizontal,
+        left: leftIcon ? scale(44) : Layout.input.paddingHorizontal,
         top: animatedValue.interpolate({
             inputRange: [0, 1],
             outputRange: [16, 6],
@@ -152,30 +153,30 @@ const styles = StyleSheet.create({
         flex: 1,
         height: '100%',
         paddingHorizontal: Layout.input.paddingHorizontal,
-        paddingTop: 16,
+        paddingTop: verticalScale(16),
         fontSize: Fonts.size.md,
         fontFamily: Fonts.family.regular,
         color: Colors.neutral.textDark,
     },
 
     inputWithLeftIcon: {
-        paddingLeft: 44,
+        paddingLeft: scale(44),
     },
 
     inputWithRightIcon: {
-        paddingRight: 44,
+        paddingRight: scale(44),
     },
 
     leftIcon: {
         position: 'absolute',
-        left: 12,
+        left: scale(12),
         zIndex: 1,
     },
 
     rightIcon: {
         position: 'absolute',
-        right: 12,
-        padding: 4,
+        right: scale(12),
+        padding: scale(4),
     },
 
     errorText: {

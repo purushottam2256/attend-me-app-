@@ -24,10 +24,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../utils/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const RING_SIZE = 140;
-const STROKE_WIDTH = 8;
+const RING_SIZE = moderateScale(140);
+const STROKE_WIDTH = scale(8);
 const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -62,8 +63,8 @@ export const CircularClockHero = forwardRef<CircularClockHeroRef, CircularClockH
   // Slider state
   const sliderX = useRef(new Animated.Value(0)).current;
   const [sliderCompleted, setSliderCompleted] = useState(false);
-  const [sliderMaxWidth, setSliderMaxWidth] = useState(200);
-  const thumbWidth = 48;
+  const [sliderMaxWidth, setSliderMaxWidth] = useState(scale(200));
+  const thumbWidth = scale(48);
   const maxSlide = sliderMaxWidth - thumbWidth - 8;
 
   useImperativeHandle(ref, () => ({
@@ -297,7 +298,7 @@ export const CircularClockHero = forwardRef<CircularClockHeroRef, CircularClockH
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-              <Ionicons name="chevron-forward" size={24} color="#FFF" />
+              <Ionicons name="chevron-forward" size={normalizeFont(24)} color="#FFF" />
               </LinearGradient>
             </Animated.View>
           </View>
@@ -308,7 +309,7 @@ export const CircularClockHero = forwardRef<CircularClockHeroRef, CircularClockH
             onPress={onManualEntry}
             activeOpacity={0.8}
           >
-            <Ionicons name="create-outline" size={22} color={colors.accent} />
+            <Ionicons name="create-outline" size={normalizeFont(22)} color={colors.accent} />
           </TouchableOpacity>
         </View>
       </View>
@@ -318,54 +319,54 @@ export const CircularClockHero = forwardRef<CircularClockHeroRef, CircularClockH
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginHorizontal: scale(16),
+    marginBottom: verticalScale(16),
   },
   card: {
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: moderateScale(24),
+    padding: scale(20),
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: verticalScale(8) },
     shadowOpacity: 0.15,
-    shadowRadius: 24,
+    shadowRadius: moderateScale(24),
     elevation: 8,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   liveIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: moderateScale(4),
+    marginRight: scale(6),
   },
   liveText: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '700',
     letterSpacing: 1,
   },
   timeRange: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '500',
   },
   clockSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 12,
+    marginVertical: verticalScale(12),
   },
   glowRing: {
     position: 'absolute',
-    width: RING_SIZE + 30,
-    height: RING_SIZE + 30,
-    borderRadius: (RING_SIZE + 30) / 2,
-    borderWidth: 3,
+    width: RING_SIZE + scale(30),
+    height: RING_SIZE + scale(30),
+    borderRadius: (RING_SIZE + scale(30)) / 2,
+    borderWidth: scale(3),
   },
   ringContainer: {
     width: RING_SIZE,
@@ -378,54 +379,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clockTime: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: '700',
     letterSpacing: -0.5,
   },
   clockProgress: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: verticalScale(2),
   },
   classInfo: {
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: verticalScale(8),
+    marginBottom: verticalScale(16),
   },
   subjectName: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '700',
     textAlign: 'center',
   },
   sectionText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: verticalScale(2),
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: scale(12),
   },
   slider: {
     flex: 1,
-    height: 52,
-    borderRadius: 26,
+    height: verticalScale(52),
+    borderRadius: moderateScale(26),
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: scale(4),
     overflow: 'hidden',
   },
   sliderText: {
     position: 'absolute',
     width: '100%',
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '600',
   },
   sliderThumb: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: scale(48),
+    height: scale(48),
+    borderRadius: moderateScale(24),
     overflow: 'hidden',
   },
   thumbGradient: {
@@ -434,9 +435,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   manualBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: scale(52),
+    height: scale(52),
+    borderRadius: moderateScale(26),
     alignItems: 'center',
     justifyContent: 'center',
   },

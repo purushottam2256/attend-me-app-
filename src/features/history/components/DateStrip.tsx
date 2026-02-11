@@ -14,8 +14,10 @@ import {
 } from 'react-native';
 import { useColors } from '../../../hooks';
 
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const DATE_TILE_WIDTH = 56;
+const DATE_TILE_WIDTH = scale(56);
 
 interface DateStripProps {
   selectedDate: Date;
@@ -121,44 +123,44 @@ export const DateStrip: React.FC<DateStripProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 12,
+    paddingVertical: verticalScale(12),
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    gap: 10,
+    paddingHorizontal: scale(16),
+    gap: scale(10),
   },
   dateTile: {
     width: DATE_TILE_WIDTH,
-    height: 72,
-    borderRadius: 16,
+    height: verticalScale(72),
+    borderRadius: moderateScale(16),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 0.5,
   },
   dayText: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   dateText: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: '700',
   },
   indicator: {
     position: 'absolute',
-    bottom: 8,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    bottom: verticalScale(8),
+    width: scale(6),
+    height: scale(6),
+    borderRadius: moderateScale(3),
   },
   todayDot: {
     position: 'absolute',
-    bottom: 8,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    bottom: verticalScale(8),
+    width: scale(4),
+    height: scale(4),
+    borderRadius: moderateScale(2),
     opacity: 0.5,
   },
 });

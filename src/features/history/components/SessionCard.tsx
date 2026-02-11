@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface SessionData {
   id: string;
@@ -110,7 +111,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
 
   const expandHeight = expandAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 180],
+    outputRange: [0, verticalScale(180)],
   });
 
   return (
@@ -241,107 +242,107 @@ export const SessionCard: React.FC<SessionCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: moderateScale(16),
     borderWidth: 0.5,
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
     flexDirection: 'row',
     overflow: 'hidden',
   },
   healthStrip: {
-    width: 4,
+    width: scale(4),
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: scale(16),
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
   },
   subjectInfo: {
     flex: 1,
   },
   subject: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
   },
   meta: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '500',
   },
   syncStatus: {
-    marginLeft: 12,
+    marginLeft: scale(12),
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 8,
+    gap: scale(8),
   },
   statBox: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    paddingVertical: verticalScale(10),
+    paddingHorizontal: scale(12),
+    borderRadius: moderateScale(10),
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '700',
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: verticalScale(2),
   },
   expandPanel: {
     overflow: 'hidden',
   },
   expandContent: {
-    paddingTop: 16,
+    paddingTop: verticalScale(16),
   },
   absenteesSection: {
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   absenteesList: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: verticalScale(18),
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: scale(8),
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    gap: scale(6),
+    paddingVertical: verticalScale(10),
+    paddingHorizontal: scale(14),
+    borderRadius: moderateScale(10),
   },
   actionBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
   },
   modifiedText: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '500',
-    marginTop: 12,
+    marginTop: verticalScale(12),
     fontStyle: 'italic',
   },
   expandIndicator: {
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: verticalScale(8),
   },
 });
 

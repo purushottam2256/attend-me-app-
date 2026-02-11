@@ -6,27 +6,26 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, Image } from 'react-native';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface RadarAnimationProps {
   detected: number;
   total: number;
   isScanning: boolean;
-  detected: number;
-  total: number;
-  isScanning: boolean;
   isAutoPilot?: boolean;
+  size?: number;
   centerImage?: any; // Allow passing an image source
+  themeColor?: string; // Allow overriding the main accent color
 }
 
 export const RadarAnimation: React.FC<RadarAnimationProps> = ({
   detected,
   total,
   isScanning,
-  detected,
-  total,
-  isScanning,
   isAutoPilot = false,
+  size: propSize,
   centerImage,
+  themeColor,
 }) => {
   const { isDark } = useTheme();
   const pulse1 = useRef(new Animated.Value(0)).current;
@@ -34,17 +33,19 @@ export const RadarAnimation: React.FC<RadarAnimationProps> = ({
   const pulse3 = useRef(new Animated.Value(0)).current;
   const glowPulse = useRef(new Animated.Value(0)).current;
 
-  // Mint Green accent (matches home page)
+  // Mint Green accent (matches home page) or custom themeColor
+  const effectiveAccent = themeColor || '#3DDC97';
+  
   const colors = {
-    accent: '#3DDC97',
-    accentGlow: 'rgba(61, 220, 151, 0.20)',
-    accentSubtle: 'rgba(61, 220, 151, 0.08)',
-    surface: 'rgba(255, 255, 255, 0.08)',
-    innerCircle: isDark ? '#1C1C1E' : '#FFFFFF',
-    detectedText: '#3DDC97',
-    totalText: isDark ? 'rgba(255,255,255,0.5)' : '#8E8E93',
-    divider: isDark ? 'rgba(255,255,255,0.15)' : '#E5E5EA',
-    border: 'rgba(255, 255, 255, 0.10)',
+    accent: effectiveAccent,
+    accentGlow: themeColor ? 'rgba(255, 255, 255, 0.2)' : 'rgba(61, 220, 151, 0.20)', // White glow if custom theme used (assuming custom is for dark bg)
+    accentSubtle: themeColor ? 'rgba(255, 255, 255, 0.1)' : 'rgba(61, 220, 151, 0.08)',
+    surface: themeColor ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.08)',
+    innerCircle: centerImage ? 'transparent' : (isDark ? '#1C1C1E' : '#FFFFFF'), // Transparent if image
+    detectedText: effectiveAccent,
+    totalText: themeColor ? 'rgba(255,255,255,0.7)' : (isDark ? 'rgba(255,255,255,0.5)' : '#8E8E93'),
+    divider: themeColor ? 'rgba(255,255,255,0.3)' : (isDark ? 'rgba(255,255,255,0.15)' : '#E5E5EA'),
+    border: themeColor ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.10)',
   };
 
   useEffect(() => {
@@ -105,6 +106,47 @@ export const RadarAnimation: React.FC<RadarAnimationProps> = ({
     return () => animations.stop();
   }, [isScanning, isAutoPilot, pulse1, pulse2, pulse3, glowPulse]);
 
+  const size = propSize || 200; // Default size if not provided
+  const centerSize = size * 0.475; // 95/200
+  const innerSize = size * 0.39;   // 78/200
+  const glowSize = size * 0.55;    // 110/200
+  const ringSize = size * 0.9;     // 180/200
+
+  // Dynamic styles
+  const dynamicStyles = {
+    container: {
+      width: size,
+      height: size,
+      alignItems: 'center' as const, // Fix type inference
+      justifyContent: 'center' as const,
+    },
+    glow: {
+      position: 'absolute' as const,
+      width: glowSize,
+      height: glowSize,
+      borderRadius: glowSize / 2,
+    },
+    centerCircle: {
+      width: centerSize,
+      height: centerSize,
+      borderRadius: centerSize / 2,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      borderWidth: 1,
+    },
+    innerCircle: {
+      width: innerSize,
+      height: innerSize,
+      borderRadius: innerSize / 2,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      shadowOffset: { width: 0, height: verticalScale(4) },
+      shadowOpacity: 0.15,
+      shadowRadius: moderateScale(12),
+      elevation: 6,
+    },
+  };
+
   const createRingStyle = (anim: Animated.Value, baseSize: number) => ({
     width: baseSize,
     height: baseSize,
@@ -132,24 +174,24 @@ export const RadarAnimation: React.FC<RadarAnimationProps> = ({
   });
 
   return (
-    <View style={styles.container}>
+    <View style={dynamicStyles.container}>
       {/* Pulsing rings - more refined/subtle */}
-      <Animated.View style={[styles.ring, createRingStyle(pulse1, 180)]} />
-      <Animated.View style={[styles.ring, createRingStyle(pulse2, 180)]} />
-      <Animated.View style={[styles.ring, createRingStyle(pulse3, 180)]} />
+      <Animated.View style={[styles.ring, createRingStyle(pulse1, ringSize)]} />
+      <Animated.View style={[styles.ring, createRingStyle(pulse2, ringSize)]} />
+      <Animated.View style={[styles.ring, createRingStyle(pulse3, ringSize)]} />
 
       {/* Subtle glow */}
       <Animated.View style={[
-        styles.glow, 
+        dynamicStyles.glow, 
         { backgroundColor: colors.accentSubtle, opacity: glowOpacity }
       ]} />
 
       {/* Center circle - Apple-style glass effect */}
-      <View style={[styles.centerCircle, { 
+      <View style={[dynamicStyles.centerCircle, { 
         backgroundColor: colors.surface, 
         borderColor: colors.border 
       }]}>
-        <View style={[styles.innerCircle, { 
+        <View style={[dynamicStyles.innerCircle, { 
           backgroundColor: centerImage ? (isDark ? '#000' : '#FFF') : colors.innerCircle,
           shadowColor: colors.accent,
           overflow: 'hidden' // Ensure image stays inside
@@ -183,54 +225,23 @@ export const RadarAnimation: React.FC<RadarAnimationProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: 200,
-    height: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   ring: {
     position: 'absolute',
     borderWidth: 1.5,
   },
-  glow: {
-    position: 'absolute',
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-  },
-  centerCircle: {
-    width: 95,
-    height: 95,
-    borderRadius: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  innerCircle: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
-  },
   detectedCount: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: '700',
     letterSpacing: -0.5,
   },
   divider: {
-    width: 22,
+    width: scale(22),
     height: 1.5,
-    marginVertical: 3,
+    marginVertical: verticalScale(3),
     borderRadius: 1,
   },
   totalCount: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '500',
   },
   statusPill: {
@@ -238,20 +249,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
+    gap: scale(6),
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(5),
+    borderRadius: moderateScale(12),
 
   },
   statusDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: scale(5),
+    height: scale(5),
+    borderRadius: moderateScale(2.5),
     backgroundColor: '#636366',
   },
   statusText: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.8)',
     letterSpacing: 0.3,

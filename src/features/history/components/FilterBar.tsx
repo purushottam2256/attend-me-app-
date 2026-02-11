@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useColors } from '../../../hooks';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 // Filter options
 const YEARS = ['all', '1', '2', '3', '4'];
@@ -60,7 +61,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           >
             <Text style={{ 
               color: selected === opt ? '#000' : colors.textSecondary,
-              fontSize: 12,
+              fontSize: normalizeFont(12),
               fontWeight: '600',
             }}>
               {displayFn ? displayFn(opt) : opt === 'all' ? 'All' : opt}
@@ -82,36 +83,36 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 8,
+    paddingBottom: verticalScale(8),
   },
   filterBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginHorizontal: 12,
-    marginTop: 8,
-    borderRadius: 12,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(10),
+    marginHorizontal: scale(12),
+    marginTop: verticalScale(8),
+    borderRadius: moderateScale(12),
     borderWidth: 1,
   },
   filterLabel: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginRight: 10,
-    minWidth: 55,
+    marginRight: scale(10),
+    minWidth: scale(55),
   },
   filterChips: {
     flexDirection: 'row',
-    gap: 6,
-    paddingRight: 12,
+    gap: scale(6),
+    paddingRight: scale(12),
   },
   filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    minWidth: 36,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(8),
+    minWidth: scale(36),
     alignItems: 'center',
   },
 });

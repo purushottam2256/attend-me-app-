@@ -22,6 +22,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -144,11 +145,11 @@ export const ScanBlockedModal: React.FC<ScanBlockedModalProps> = ({
       onRequestClose={onClose}
     >
       <BlurView intensity={40} tint="dark" style={styles.overlay}>
-        <View style={[styles.container, { paddingBottom: insets.bottom + 24 }]}>
+        <View style={[styles.container, { paddingBottom: insets.bottom + verticalScale(24) }]}>
           {/* Icon Circle */}
           <View style={[styles.iconCircle, { backgroundColor: `${config.iconColor}15` }]}>
             <View style={[styles.iconInner, { backgroundColor: `${config.iconColor}25` }]}>
-              <Ionicons name={config.icon} size={48} color={config.iconColor} />
+              <Ionicons name={config.icon} size={normalizeFont(48)} color={config.iconColor} />
             </View>
           </View>
 
@@ -161,7 +162,7 @@ export const ScanBlockedModal: React.FC<ScanBlockedModalProps> = ({
           {/* Current Time Display */}
           {currentTime && (
             <View style={styles.timeContainer}>
-              <Ionicons name="time-outline" size={16} color="rgba(255,255,255,0.5)" />
+              <Ionicons name="time-outline" size={normalizeFont(16)} color="rgba(255,255,255,0.5)" />
               <Text style={styles.timeText}>Current Time: {currentTime}</Text>
             </View>
           )}
@@ -170,7 +171,7 @@ export const ScanBlockedModal: React.FC<ScanBlockedModalProps> = ({
           {showPreviousClassOption && previousClass && (
             <View style={styles.previousClassCard}>
               <View style={styles.previousClassHeader}>
-                <Ionicons name="time-outline" size={18} color="#F59E0B" />
+                <Ionicons name="time-outline" size={normalizeFont(18)} color="#F59E0B" />
                 <Text style={styles.previousClassLabel}>Previous Class</Text>
               </View>
               <Text style={styles.previousClassName}>{previousClass.name}</Text>
@@ -182,7 +183,7 @@ export const ScanBlockedModal: React.FC<ScanBlockedModalProps> = ({
           {nextClass && (
             <View style={styles.nextClassCard}>
               <View style={styles.nextClassHeader}>
-                <Ionicons name="arrow-forward-circle-outline" size={18} color="#3DDC97" />
+                <Ionicons name="arrow-forward-circle-outline" size={normalizeFont(18)} color="#3DDC97" />
                 <Text style={styles.nextClassLabel}>Next Class</Text>
               </View>
               <Text style={styles.nextClassName}>{nextClass.name}</Text>
@@ -192,7 +193,7 @@ export const ScanBlockedModal: React.FC<ScanBlockedModalProps> = ({
 
           {/* Suggestion */}
           <View style={styles.suggestionContainer}>
-            <Ionicons name="bulb-outline" size={16} color="#F59E0B" />
+            <Ionicons name="bulb-outline" size={normalizeFont(16)} color="#F59E0B" />
             <Text style={styles.suggestionText}>{config.suggestion}</Text>
           </View>
 
@@ -209,7 +210,7 @@ export const ScanBlockedModal: React.FC<ScanBlockedModalProps> = ({
                   colors={['#F59E0B', '#D97706']}
                   style={styles.buttonGradient}
                 >
-                  <Ionicons name="list-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                  <Ionicons name="list-outline" size={normalizeFont(20)} color="#FFF" style={{ marginRight: scale(8) }} />
                   <Text style={styles.buttonText}>Take Late Attendance</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -225,7 +226,7 @@ export const ScanBlockedModal: React.FC<ScanBlockedModalProps> = ({
                 colors={['#1A6B6B', '#0D4A4A']}
                 style={styles.buttonGradient}
               >
-                <Ionicons name="home-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                <Ionicons name="home-outline" size={normalizeFont(20)} color="#FFF" style={{ marginRight: scale(8) }} />
                 <Text style={styles.buttonText}>Go Back Home</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -241,149 +242,149 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: scale(24),
   },
   container: {
-    width: SCREEN_WIDTH - 48,
+    width: SCREEN_WIDTH - scale(48),
     backgroundColor: 'rgba(15, 23, 42, 0.95)',
-    borderRadius: 28,
-    padding: 32,
+    borderRadius: moderateScale(28),
+    padding: scale(32),
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
   iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: scale(120),
+    height: scale(120),
+    borderRadius: moderateScale(60),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   iconInner: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: scale(88),
+    height: scale(88),
+    borderRadius: moderateScale(44),
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: normalizeFont(24),
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
     letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 20,
-    paddingHorizontal: 8,
+    lineHeight: verticalScale(22),
+    marginBottom: verticalScale(20),
+    paddingHorizontal: scale(8),
   },
   timeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 16,
+    gap: scale(6),
+    marginBottom: verticalScale(16),
   },
   timeText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     color: 'rgba(255,255,255,0.5)',
   },
   previousClassCard: {
     width: '100%',
     backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: moderateScale(16),
+    padding: scale(16),
+    marginBottom: verticalScale(12),
     borderWidth: 1,
     borderColor: 'rgba(245, 158, 11, 0.2)',
   },
   previousClassHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: scale(8),
+    marginBottom: verticalScale(8),
   },
   previousClassLabel: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '600',
     color: '#F59E0B',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   previousClassName: {
-    fontSize: 17,
+    fontSize: normalizeFont(17),
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   previousClassSection: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     color: 'rgba(255,255,255,0.6)',
   },
   nextClassCard: {
     width: '100%',
     backgroundColor: 'rgba(61, 220, 151, 0.1)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: moderateScale(16),
+    padding: scale(16),
+    marginBottom: verticalScale(16),
     borderWidth: 1,
     borderColor: 'rgba(61, 220, 151, 0.2)',
   },
   nextClassHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: scale(8),
+    marginBottom: verticalScale(8),
   },
   nextClassLabel: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '600',
     color: '#3DDC97',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   nextClassName: {
-    fontSize: 17,
+    fontSize: normalizeFont(17),
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   nextClassTime: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     color: 'rgba(255,255,255,0.6)',
   },
   suggestionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    gap: scale(8),
+    marginBottom: verticalScale(24),
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(12),
     backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
   },
   suggestionText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     color: '#F59E0B',
     flex: 1,
   },
   buttonContainer: {
     width: '100%',
-    gap: 12,
+    gap: verticalScale(12),
   },
   primaryButton: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: moderateScale(16),
     overflow: 'hidden',
   },
   secondaryButton: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: moderateScale(16),
     overflow: 'hidden',
   },
   fullWidthButton: {
@@ -393,11 +394,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: verticalScale(16),
+    paddingHorizontal: scale(24),
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
     color: '#FFFFFF',
   },

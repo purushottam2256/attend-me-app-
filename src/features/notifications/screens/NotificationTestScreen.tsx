@@ -14,12 +14,13 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { useTheme } from '../../contexts';
-import { NotificationService } from '../../services/NotificationService';
-import { useNotifications } from '../../contexts/NotificationContext';
-import { supabase } from '../../config/supabase';
-import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../../contexts';
+import { NotificationService } from '../../../services/NotificationService';
+import { useNotifications } from '../../../contexts/NotificationContext';
+import { supabase } from '../../../config/supabase';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 export const NotificationTestScreen = () => {
   const { colors } = useTheme();
@@ -46,7 +47,7 @@ export const NotificationTestScreen = () => {
       onPress={onPress}
       disabled={loading !== null}
     >
-      <Ionicons name={icon as any} size={24} color="#fff" />
+      <Ionicons name={icon as any} size={normalizeFont(24)} color="#fff" />
       <View style={styles.buttonText}>
         <Text style={styles.buttonTitle}>{title}</Text>
         <Text style={styles.buttonSubtitle}>{subtitle}</Text>
@@ -328,87 +329,87 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 20,
-    paddingTop: 60,
+    padding: scale(20),
+    paddingTop: verticalScale(60),
   },
   title: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: 'bold',
   },
   subtitle: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: normalizeFont(14),
+    marginTop: verticalScale(4),
   },
   statusCard: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
+    margin: scale(16),
+    padding: scale(16),
+    borderRadius: moderateScale(12),
   },
   statusTitle: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
   },
   statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   statusLabel: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
   },
   statusValue: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '600',
   },
   tokenPreview: {
-    fontSize: 10,
-    marginTop: 8,
+    fontSize: normalizeFont(10),
+    marginTop: verticalScale(8),
     fontFamily: 'monospace',
   },
   section: {
-    padding: 16,
+    padding: scale(16),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: scale(16),
+    borderRadius: moderateScale(12),
+    marginBottom: verticalScale(12),
   },
   buttonText: {
-    marginLeft: 12,
+    marginLeft: scale(12),
     flex: 1,
   },
   buttonTitle: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
   },
   buttonSubtitle: {
     color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: normalizeFont(12),
+    marginTop: verticalScale(2),
   },
   loadingIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: scale(20),
+    height: scale(20),
+    borderRadius: moderateScale(10),
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.5)',
     borderTopColor: '#fff',
   },
   footer: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: scale(20),
+    paddingBottom: verticalScale(40),
   },
   footerText: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     textAlign: 'center',
   },
 });

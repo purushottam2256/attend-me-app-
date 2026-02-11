@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { scale, verticalScale, moderateScale, normalizeFont } from "../utils/responsive";
 
 interface ZenToastProps {
   message: string;
@@ -60,14 +61,14 @@ export const ZenToast: React.FC<ZenToastProps> = ({
   };
 
   return (
-    <View style={[styles.toastContainer, { top: insets.top + 20 }]}>
+    <View style={[styles.toastContainer, { top: insets.top + verticalScale(20) }]}>
       <View
         style={[
           styles.toastContent,
-          { borderLeftColor: getColor(), borderLeftWidth: 4 },
+          { borderLeftColor: getColor(), borderLeftWidth: scale(4) },
         ]}
       >
-        <Ionicons name={getIcon()} size={20} color={getColor()} />
+        <Ionicons name={getIcon()} size={moderateScale(20)} color={getColor()} />
         <Text style={[styles.toastText, { color: getColor() }]}>{message}</Text>
         
         {onAction && (
@@ -91,8 +92,8 @@ export const ZenToast: React.FC<ZenToastProps> = ({
 const styles = StyleSheet.create({
   toastContainer: {
     position: "absolute",
-    left: 20,
-    right: 20,
+    left: scale(20),
+    right: scale(20),
     zIndex: 9999,
     alignItems: "center",
   },
@@ -100,33 +101,33 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFF",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(12),
     shadowColor: "#000",
     shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowRadius: moderateScale(10),
     elevation: 6,
-    gap: 12,
+    gap: scale(12),
     width: "100%",
   },
   toastText: {
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     flex: 1,
   },
   actionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: scale(12),
   },
   divider: {
     width: 1,
-    height: 20,
+    height: verticalScale(20),
   },
   actionText: {
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     textTransform: 'uppercase',
   }
 });

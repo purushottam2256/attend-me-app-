@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface NotificationDetailModalProps {
   visible: boolean;
@@ -44,12 +45,12 @@ export const NotificationDetailModal = ({
                         <View style={[styles.iconBadge, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#DCFCE7' }]}>
                             <Ionicons 
                                 name={notification.type === 'request' ? 'swap-horizontal' : 'notifications'} 
-                                size={24} 
+                                size={normalizeFont(24)} 
                                 color="#10B981" 
                             />
                         </View>
                         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                            <Ionicons name="close" size={24} color={isDark ? '#94A3B8' : '#64748B'} />
+                            <Ionicons name="close" size={normalizeFont(24)} color={isDark ? '#94A3B8' : '#64748B'} />
                         </TouchableOpacity>
                     </View>
 
@@ -75,7 +76,7 @@ export const NotificationDetailModal = ({
                                 onClose();
                             }}
                         >
-                            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                            <Ionicons name="trash-outline" size={normalizeFont(20)} color="#EF4444" />
                             <Text style={styles.deleteText}>Delete</Text>
                         </TouchableOpacity>
 
@@ -96,81 +97,81 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
   },
   modalContainer: {
     width: '100%',
-    borderRadius: 24,
+    borderRadius: moderateScale(24),
     borderWidth: 1,
-    padding: 24,
+    padding: scale(24),
     maxHeight: '70%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: verticalScale(10) },
     shadowOpacity: 0.25,
-    shadowRadius: 20,
+    shadowRadius: moderateScale(20),
     elevation: 10,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
   iconBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: scale(48),
+    height: scale(48),
+    borderRadius: moderateScale(16),
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButton: {
-    padding: 4,
+    padding: scale(4),
   },
   content: {
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   date: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '500',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   title: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: '700',
-    marginBottom: 12,
-    lineHeight: 28,
+    marginBottom: verticalScale(12),
+    lineHeight: verticalScale(28),
   },
   body: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: normalizeFont(16),
+    lineHeight: verticalScale(24),
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: verticalScale(8),
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 8,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(12),
+    gap: scale(8),
   },
   deleteText: {
     color: '#EF4444',
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '600',
   },
   doneButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: scale(24),
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(12),
   },
   doneText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '600',
   },
 });

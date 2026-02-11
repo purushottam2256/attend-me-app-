@@ -33,6 +33,7 @@ import { Colors } from '../../../constants';
 import { cacheProfile, getCachedProfile, cacheTimetable, getCachedTimetable } from '../../../services/offlineService';
 import { useConnectionStatus } from '../../../hooks';
 import { NotificationService } from '../../../services/NotificationService';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive'; // Import responsive utils
 
 interface ProfileScreenProps {
   userName: string;
@@ -100,6 +101,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
   const [leaveFrom, setLeaveFrom] = useState(new Date());
   const [leaveTo, setLeaveTo] = useState(new Date());
   const [leaveType, setLeaveType] = useState<'full_day' | 'half_day'>('full_day');
+  const [leaveSession, setLeaveSession] = useState<'morning' | 'afternoon'>('morning');
   
   // Date Picker State
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -148,6 +150,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
             .select(`
                 day,
                 slot_id,
+                start_time,
+                end_time,
                 target_dept,
                 target_year,
                 target_section,
@@ -263,10 +267,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
         
         // For Half Day, imply End Date = Start Date (Single Day)
         const finalEndDate = leaveType === 'half_day' ? leaveFrom : leaveTo;
+        
+        let finalReason = leaveReason;
+        if (leaveType === 'half_day') {
+            finalReason = `[${leaveSession === 'morning' ? 'Morning' : 'Afternoon'} Session] ${leaveReason}`;
+        }
 
         const { error } = await supabase.from('leaves').insert({
             user_id: user.id,
-            reason: leaveReason,
+            reason: finalReason,
             start_date: leaveFrom.toISOString(),
             end_date: finalEndDate.toISOString(),
             leave_type: leaveType,
@@ -390,7 +399,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
             ]}>
               <Ionicons 
                 name={item.icon} 
-                size={22} 
+                size={normalizeFont(22)} 
                 color={item.destructive ? '#EF4444' : (item.color || '#334155')} 
               />
             </View>
@@ -417,7 +426,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
             ) : (
               <Ionicons 
                 name="chevron-forward" 
-                size={20} 
+                size={normalizeFont(20)} 
                 color={isDark ? '#475569' : '#CBD5E1'} 
               />
             )}
@@ -451,7 +460,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + verticalScale(20) }]}
         showsVerticalScrollIndicator={false}
       >
         <DigitalIdCard 
@@ -465,7 +474,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
             onEdit={() => setEditProfileVisible(true)}
         />
 
-        <View style={{ marginBottom: 24 }} />
+        <View style={{ marginBottom: verticalScale(24) }} />
 
         {renderSection('Faculty Services', [
            { icon: 'document-text', label: 'Apply for Leave', value: 'Notify HOD', onPress: () => setLeaveModalVisible(true), color: '#F59E0B' },
@@ -504,23 +513,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
                   <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#082020' }]}>Apply for Leave</Text>
                   
                   {/* Leave Type Toggle */}
-                   <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                   <View style={{ flexDirection: 'row', marginBottom: verticalScale(16) }}>
                       {['full_day', 'half_day'].map((type) => (
                           <TouchableOpacity 
                               key={type}
                               onPress={() => setLeaveType(type as any)}
                               style={{ 
                                   flex: 1, 
-                                  paddingVertical: 10, 
+                                  paddingVertical: verticalScale(10), 
                                   alignItems: 'center', 
                                   backgroundColor: leaveType === type ? '#0F766E' : (isDark ? '#082020' : '#F1F5F9'),
-                                  borderRadius: 8,
-                                  marginRight: 8
+                                  borderRadius: moderateScale(8),
+                                  marginRight: scale(8)
                               }}
                           >
                               <Text style={{ 
                                   color: leaveType === type ? '#FFF' : (isDark ? '#94A3B8' : '#64748B'),
-                                  fontWeight: '700', fontSize: 13
+                                  fontWeight: '700', fontSize: normalizeFont(13)
                               }}>
                                   {type === 'full_day' ? 'Full Day' : 'Half Day'}
                               </Text>
@@ -530,7 +539,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
 
                   <View style={{ marginBottom: 16 }}>
                       {leaveType === 'full_day' ? (
-                          <View style={{ flexDirection: 'row', gap: 12 }}>
+                          <View style={{ flexDirection: 'row', gap: scale(12) }}>
                               <View style={{ flex: 1 }}>
                                   <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>FROM</Text>
                                   <TouchableOpacity onPress={() => showDatepicker('from')} style={[styles.dateBtn, { backgroundColor: isDark ? '#082020' : '#F8FAFC' }]}>
@@ -546,17 +555,40 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
                           </View>
                       ) : (
                           <View>
-                              <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>DATE</Text>
-                              <TouchableOpacity onPress={() => showDatepicker('from')} style={[styles.dateBtn, { backgroundColor: isDark ? '#082020' : '#F8FAFC', width: '100%' }]}>
-                                  <Text style={{ color: isDark ? '#FFF' : '#082020' }}>{leaveFrom.toLocaleDateString()}</Text>
-                              </TouchableOpacity>
+                              <View style={{ flexDirection: 'row', gap: scale(12), marginBottom: verticalScale(12) }}>
+                                  <View style={{ flex: 1 }}>
+                                    <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>DATE</Text>
+                                    <TouchableOpacity onPress={() => showDatepicker('from')} style={[styles.dateBtn, { backgroundColor: isDark ? '#082020' : '#F8FAFC', width: '100%' }]}>
+                                        <Text style={{ color: isDark ? '#FFF' : '#082020' }}>{leaveFrom.toLocaleDateString()}</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                  
+                                  {/* Session Selector for Half Day */}
+                                  <View style={{ flex: 1 }}>
+                                       <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B' }]}>SESSION</Text>
+                                       <View style={{ flexDirection: 'row', height: verticalScale(48), backgroundColor: isDark ? '#082020' : '#F8FAFC', borderRadius: moderateScale(12), padding: scale(4), borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0' }}>
+                                           <TouchableOpacity 
+                                              onPress={() => setLeaveSession('morning')}
+                                              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: moderateScale(8), backgroundColor: leaveSession === 'morning' ? '#0F766E' : 'transparent' }}
+                                           >
+                                               <Text style={{ fontSize: normalizeFont(12), fontWeight: '700', color: leaveSession === 'morning' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B') }}>AM</Text>
+                                           </TouchableOpacity>
+                                           <TouchableOpacity 
+                                              onPress={() => setLeaveSession('afternoon')}
+                                              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: moderateScale(8), backgroundColor: leaveSession === 'afternoon' ? '#0F766E' : 'transparent' }}
+                                           >
+                                               <Text style={{ fontSize: normalizeFont(12), fontWeight: '700', color: leaveSession === 'afternoon' ? '#FFF' : (isDark ? '#94A3B8' : '#64748B') }}>PM</Text>
+                                           </TouchableOpacity>
+                                       </View>
+                                  </View>
+                              </View>
                           </View>
                       )}
                   </View>
 
                   <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : '#64748B', marginTop: 4 }]}>REASON</Text>
                   <TextInput 
-                      style={[styles.input, { color: isDark ? '#FFF' : '#082020', backgroundColor: isDark ? '#082020' : '#F8FAFC', height: 80, textAlignVertical: 'top' }]}
+                      style={[styles.input, { color: isDark ? '#FFF' : '#082020', backgroundColor: isDark ? '#082020' : '#F8FAFC', height: verticalScale(80), textAlignVertical: 'top' }]}
                       value={leaveReason} onChangeText={setLeaveReason} multiline placeholder="I am taking leave because..." placeholderTextColor="#94A3B8"
                   />
 
@@ -600,23 +632,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
           <View style={{ flex: 1, backgroundColor: '#0F766E' }}> 
               
               {/* Header */}
-              <View style={[styles.modalHeader, { marginTop: insets.top + 20, paddingHorizontal: 20, justifyContent: 'flex-start', gap: 16 }]}>
+              <View style={[styles.modalHeader, { marginTop: insets.top + verticalScale(20), paddingHorizontal: scale(20), justifyContent: 'flex-start', gap: scale(16) }]}>
                   <TouchableOpacity 
                       onPress={() => setScheduleModalVisible(false)}
                       style={{ 
-                        width: 44,
-                        height: 44,
-                        borderRadius: 14,
+                        width: scale(44),
+                        height: scale(44),
+                        borderRadius: moderateScale(14),
                         backgroundColor: 'rgba(255,255,255,0.15)',
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}
                   >
-                      <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                      <Ionicons name="chevron-back" size={normalizeFont(24)} color="#FFFFFF" />
                   </TouchableOpacity>
                   <View>
-                      <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '700', letterSpacing: 1 }}>ACADEMIC PLAN</Text>
-                      <Text style={{ color: '#FFF', fontSize: 24, fontWeight: '800' }}>Weekly Schedule</Text>
+                      <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: normalizeFont(12), fontWeight: '700', letterSpacing: 1 }}>ACADEMIC PLAN</Text>
+                      <Text style={{ color: '#FFF', fontSize: normalizeFont(24), fontWeight: '800' }}>Weekly Schedule</Text>
                   </View>
               </View>
               
@@ -626,86 +658,95 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
                         <ScrollView horizontal showsHorizontalScrollIndicator={true}>
                             <View>
                                 {/* Header Row (Days) */}
-                                <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', paddingBottom: 8, marginBottom: 8 }}>
-                                    <View style={{ width: 80, alignItems: 'center', justifyContent: 'center' }}>
-                                        <Text style={{ fontSize: 12, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B' }}>TIME / DAY</Text>
+                                <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', paddingBottom: verticalScale(8), marginBottom: verticalScale(8) }}>
+                                    <View style={{ width: scale(80), alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: normalizeFont(12), fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B' }}>TIME / DAY</Text>
                                     </View>
                                     {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-                                        <View key={day} style={{ width: 140, alignItems: 'center', justifyContent: 'center' }}>
-                                            <Text style={{ fontSize: 14, fontWeight: '800', color: isDark ? '#FFF' : '#082020' }}>{day}</Text>
+                                        <View key={day} style={{ width: scale(140), alignItems: 'center', justifyContent: 'center' }}>
+                                            <Text style={{ fontSize: normalizeFont(14), fontWeight: '800', color: isDark ? '#FFF' : '#082020' }}>{day}</Text>
                                         </View>
                                     ))}
                                 </View>
 
-                                {/* Time Rows */}
-                                {[
-                                    { id: 'p1', time: '09:30 - 10:20' },
-                                    { id: 'p2', time: '10:20 - 11:10' },
-                                    { id: 'p3', time: '11:10 - 12:00' },
-                                    { id: 'p4', time: '12:00 - 12:50' },
-                                    { id: 'LUNCH', time: '12:50 - 01:40', type: 'BREAK' },
-                                    { id: 'p5', time: '01:40 - 02:30' },
-                                    { id: 'p6', time: '02:30 - 03:20' }
-                                ].map((row, rowIdx) => {
-                                    if (row.type === 'BREAK') {
-                                        return (
-                                            <View key={row.id} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'center' }}>
-                                                <View style={{ width: 80, paddingRight: 12, justifyContent: 'center' }}>
-                                                    <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#FFF' : '#082020', textAlign: 'center' }}>{row.time.split(' - ')[0]}</Text>
-                                                    <Text style={{ fontSize: 10,  color: isDark ? '#94A3B8' : '#64748B', textAlign: 'center' }}>to</Text>
-                                                    <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#FFF' : '#082020', textAlign: 'center' }}>{row.time.split(' - ')[1]}</Text>
-                                                </View>
-                                                <View style={{ flex: 1, height: 40, backgroundColor: isDark ? '#1E293B' : '#E2E8F0', borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                                                    <Text style={{ fontSize: 12, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B', letterSpacing: 2 }}>LUNCH BREAK 🍱</Text>
-                                                </View>
-                                            </View>
-                                        );
-                                    }
+                                {/* Dynamic Time Rows */}
+                                {(() => {
+                                   // Extract unique slots from timetable
+                                   const uniqueSlots = new Map<string, { start: string, end: string, sortKey: string }>();
+                                   timetable.forEach(t => {
+                                     // Use start_time as key to group duplicates
+                                     const key = t.slot_id; 
+                                     if (!uniqueSlots.has(key) && t.start_time) {
+                                         // Create a comparable sort key (HH:MM string works if 24h)
+                                         uniqueSlots.set(key, { 
+                                           start: t.start_time.slice(0, 5), 
+                                           end: t.end_time?.slice(0, 5) || '??:??',
+                                           sortKey: t.start_time
+                                         });
+                                     }
+                                   });
+                                   
+                                   // Convert to array and sort
+                                   const sortedSlots = Array.from(uniqueSlots.entries())
+                                     .map(([id, times]) => ({ id, time: `${times.start} - ${times.end}`, sortKey: times.sortKey }))
+                                     .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
-                                    return (
-                                        <View key={row.id} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'center' }}>
-                                            {/* Time Column */}
-                                            <View style={{ width: 80, paddingRight: 12, justifyContent: 'center' }}>
-                                                <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#FFF' : '#082020', textAlign: 'center' }}>{row.time.split(' - ')[0]}</Text>
-                                                <Text style={{ fontSize: 10,  color: isDark ? '#94A3B8' : '#64748B', textAlign: 'center' }}>to</Text>
-                                                <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#FFF' : '#082020', textAlign: 'center' }}>{row.time.split(' - ')[1]}</Text>
-                                            </View>
-    
-                                            {/* Schedule Cells */}
-                                            {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day, colIdx) => {
-                                                const slotData = timetable.find(t => 
-                                                    t.day?.toUpperCase().startsWith(day) && 
-                                                    String(t.slot_id) === String(row.id)
-                                                );
-                                                
-                                                const hasClass = !!slotData;
-                                                
-                                                return (
-                                                    <View key={colIdx} style={{ 
-                                                        width: 140, 
-                                                        height: 60,
-                                                        backgroundColor: hasClass ? (isDark ? '#0F766E' : '#F0FDFA') : 'transparent',
-                                                        borderRadius: 12,
-                                                        borderWidth: 1,
-                                                        borderColor: hasClass ? '#0D9488' : (isDark ? '#334155' : '#E2E8F0'),
-                                                        padding: 8,
-                                                        marginRight: 8,
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        {hasClass ? (
-                                                            <>
-                                                                <Text numberOfLines={1} style={{ fontSize: 12, fontWeight: '700', color: isDark ? '#FFF' : '#0F766E' }}>{slotData.subject?.name || 'Subject'}</Text>
-                                                                <Text style={{ fontSize: 10, color: isDark ? '#99F6E4' : '#0D9488', marginTop: 2 }}>{slotData.target_dept}-{slotData.target_section}</Text>
-                                                            </>
-                                                        ) : (
-                                                            <Text style={{ fontSize: 11, color: isDark ? '#334155' : '#CBD5E1', textAlign: 'center', fontStyle: 'italic' }}>- Free -</Text>
-                                                        )}
-                                                    </View>
-                                                );
-                                            })}
-                                        </View>
-                                    );
-                                })}
+                                   // Fallback if no data (avoids empty screen on first load/no data)
+                                   const rowsToRender = sortedSlots.length > 0 ? sortedSlots : [
+                                      { id: 'p1', time: '09:30 - 10:20' },
+                                      { id: 'p2', time: '10:20 - 11:10' },
+                                   ];
+
+                                   return (
+                                     <View>
+                                       {rowsToRender.map((row, rowIdx) => {
+                                          return (
+                                              <View key={row.id} style={{ flexDirection: 'row', marginBottom: verticalScale(12), alignItems: 'center' }}>
+                                                  {/* Time Column */}
+                                                  <View style={{ width: scale(80), paddingRight: scale(12), justifyContent: 'center' }}>
+                                                      <Text style={{ fontSize: normalizeFont(11), fontWeight: '700', color: isDark ? '#FFF' : '#082020', textAlign: 'center' }}>{row.time.split(' - ')[0]}</Text>
+                                                      <Text style={{ fontSize: normalizeFont(10),  color: isDark ? '#94A3B8' : '#64748B', textAlign: 'center' }}>to</Text>
+                                                      <Text style={{ fontSize: normalizeFont(11), fontWeight: '700', color: isDark ? '#FFF' : '#082020', textAlign: 'center' }}>{row.time.split(' - ')[1]}</Text>
+                                                  </View>
+            
+                                                  {/* Schedule Cells */}
+                                                  {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day, colIdx) => {
+                                                      const slotData = timetable.find(t => 
+                                                          t.day?.toUpperCase().startsWith(day) && 
+                                                          t.slot_id === row.id
+                                                      );
+                                                      
+                                                      const hasClass = !!slotData;
+                                                      
+                                                      return (
+                                                          <View key={colIdx} style={{ 
+                                                              width: scale(140), 
+                                                              height: verticalScale(60),
+                                                              backgroundColor: hasClass ? (isDark ? '#0F766E' : '#F0FDFA') : 'transparent',
+                                                              borderRadius: moderateScale(12),
+                                                              borderWidth: 1,
+                                                              borderColor: hasClass ? '#0D9488' : (isDark ? '#334155' : '#E2E8F0'),
+                                                              padding: scale(8),
+                                                              marginRight: scale(8),
+                                                              justifyContent: 'center'
+                                                          }}>
+                                                              {hasClass ? (
+                                                                  <>
+                                                                      <Text numberOfLines={1} style={{ fontSize: normalizeFont(12), fontWeight: '700', color: isDark ? '#FFF' : '#0F766E' }}>{slotData.subject?.name || 'Subject'}</Text>
+                                                                      <Text style={{ fontSize: normalizeFont(10), color: isDark ? '#99F6E4' : '#0D9488', marginTop: verticalScale(2) }}>{slotData.target_dept}-{slotData.target_section}</Text>
+                                                                  </>
+                                                              ) : (
+                                                                  <Text style={{ fontSize: normalizeFont(11), color: isDark ? '#334155' : '#CBD5E1', textAlign: 'center', fontStyle: 'italic' }}>- Free -</Text>
+                                                              )}
+                                                          </View>
+                                                      );
+                                                  })}
+                                              </View>
+                                          );
+                                       })}
+                                     </View>
+                                   );
+                                })()}
                             </View>
                         </ScrollView>
                         
@@ -718,7 +759,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
                         <Text style={[styles.sectionTitle, { color: isDark ? '#94A3B8' : '#64748B', marginTop: 32 }]}>UPCOMING HOLIDAYS & EVENTS</Text>
                         
                         {holidays.length === 0 ? (
-                            <View style={{ padding: 20, alignItems: 'center', opacity: 0.5 }}>
+                            <View style={{ padding: scale(20), alignItems: 'center', opacity: 0.5 }}>
                                 <Text style={{ color: isDark ? '#FFF' : '#000' }}>No upcoming events.</Text>
                             </View>
                         ) : (
@@ -727,38 +768,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
                                     flexDirection: 'row', 
                                     alignItems: 'center', 
                                     backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFF', 
-                                    padding: 16, 
-                                    borderRadius: 16, 
-                                    marginBottom: 12,
+                                    padding: scale(16), 
+                                    borderRadius: moderateScale(16), 
+                                    marginBottom: verticalScale(12),
                                     borderWidth: 1,
                                     borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'transparent'
                                 }}>
                                     <View style={{ 
-                                        width: 48, height: 48, 
-                                        borderRadius: 12, 
+                                        width: scale(48), height: scale(48), 
+                                        borderRadius: moderateScale(12), 
                                         backgroundColor: h.type === 'holiday' ? 'rgba(239, 68, 68, 0.1)' : (h.type === 'exam' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)'), 
                                         alignItems: 'center', justifyContent: 'center',
-                                        marginRight: 16
+                                        marginRight: scale(16)
                                     }}>
                                         <Text style={{ 
-                                            fontSize: 18, fontWeight: '800',
+                                            fontSize: normalizeFont(18), fontWeight: '800',
                                             color: h.type === 'holiday' ? '#EF4444' : (h.type === 'exam' ? '#F59E0B' : '#3B82F6')
                                         }}>
                                             {new Date(h.date).getDate()}
                                         </Text>
                                         <Text style={{ 
-                                            fontSize: 9, fontWeight: '700', textTransform: 'uppercase',
+                                            fontSize: normalizeFont(9), fontWeight: '700', textTransform: 'uppercase',
                                             color: h.type === 'holiday' ? '#EF4444' : (h.type === 'exam' ? '#F59E0B' : '#3B82F6')
                                         }}>
                                             {new Date(h.date).toLocaleString('default', { month: 'short' })}
                                         </Text>
                                     </View>
                                     <View style={{ flex: 1 }}>
-                                        <Text style={{ color: isDark ? '#FFF' : '#0F172A', fontWeight: '700', fontSize: 15 }}>{h.title}</Text>
-                                        <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 13, marginTop: 2 }}>{h.description || 'College Event'}</Text>
+                                        <Text style={{ color: isDark ? '#FFF' : '#0F172A', fontWeight: '700', fontSize: normalizeFont(15) }}>{h.title}</Text>
+                                        <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: normalizeFont(13), marginTop: verticalScale(2) }}>{h.description || 'College Event'}</Text>
                                     </View>
-                                    <View style={{ backgroundColor: isDark ? '#334155' : '#F1F5F9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
-                                        <Text style={{ fontSize: 10, color: isDark ? '#CBD5E1' : '#475569', fontWeight: '600', textTransform: 'uppercase' }}>{h.type}</Text>
+                                    <View style={{ backgroundColor: isDark ? '#334155' : '#F1F5F9', paddingHorizontal: scale(10), paddingVertical: verticalScale(4), borderRadius: moderateScale(100) }}>
+                                        <Text style={{ fontSize: normalizeFont(10), color: isDark ? '#CBD5E1' : '#475569', fontWeight: '600', textTransform: 'uppercase' }}>{h.type}</Text>
                                     </View>
                                 </View>
                             ))
@@ -783,38 +824,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
            <View style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}>
                <LinearGradient
                    colors={['#0D4A4A', '#1A6B6B', '#0F3D3D']}
-                   style={{ paddingTop: insets.top + 16, paddingBottom: 16, paddingHorizontal: 20 }}
+                   style={{ paddingTop: insets.top + verticalScale(16), paddingBottom: verticalScale(16), paddingHorizontal: scale(20) }}
                >
-                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 16 }}>
+                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: scale(16) }}>
                         <TouchableOpacity 
-                          style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}
+                          style={{ width: scale(44), height: scale(44), borderRadius: moderateScale(14), backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}
                           onPress={() => {
                               if (helpTopic) setHelpTopic(null);
                               else setHelpModalVisible(false);
                           }}
                         >
-                          <Ionicons name={helpTopic ? "arrow-back" : "close"} size={24} color="#FFF" />
+                          <Ionicons name={helpTopic ? "arrow-back" : "close"} size={normalizeFont(24)} color="#FFF" />
                         </TouchableOpacity>
                         <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 20, fontWeight: '700', color: '#FFF' }}>
+                            <Text style={{ fontSize: normalizeFont(20), fontWeight: '700', color: '#FFF' }}>
                                 {helpTopic === 'home' ? 'Home & Schedule' : 
                                  helpTopic === 'notifs' ? 'Notifications' : 
                                  helpTopic === 'swaps' ? 'Swaps & Subs' : 
                                  helpTopic === 'profile' ? 'Profile & Tools' : 'Help Center'}
                             </Text>
-                            <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+                            <Text style={{ fontSize: normalizeFont(13), color: 'rgba(255,255,255,0.7)' }}>
                                 {helpTopic ? 'Detailed Info' : 'Complete User Guide'}
                             </Text>
                         </View>
                    </View>
                </LinearGradient>
 
-                <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 60 }}>
+                <ScrollView contentContainerStyle={{ padding: scale(24), paddingBottom: verticalScale(60) }}>
                     {!helpTopic && (
                         /* --- MAIN MENU --- */
                         <View>
-                           <View style={{ marginBottom: 24 }}>
-                               <Text style={{ fontSize: 16, color: isDark ? '#94A3B8' : '#64748B', lineHeight: 24 }}>
+                           <View style={{ marginBottom: verticalScale(24) }}>
+                               <Text style={{ fontSize: normalizeFont(16), color: isDark ? '#94A3B8' : '#64748B', lineHeight: verticalScale(24) }}>
                                    Select a topic below to view the detailed user manual.
                                </Text>
                            </View>
@@ -834,23 +875,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
                                     style={{ 
                                         flexDirection: 'row', 
                                         alignItems: 'center', 
-                                        padding: 16, 
+                                        padding: scale(16), 
                                         backgroundColor: isDark ? '#1E293B' : '#FFF',
-                                        marginBottom: 16,
-                                        borderRadius: 16,
+                                        marginBottom: verticalScale(16),
+                                        borderRadius: moderateScale(16),
                                         borderWidth: 1,
                                         borderColor: isDark ? '#334155' : '#E2E8F0',
                                         elevation: 2
                                     }}
                                >
-                                   <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: isDark ? '#334155' : '#F0FDFA', alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
-                                        <Ionicons name={item.icon as any} size={24} color="#0D9488" />
+                                   <View style={{ width: scale(48), height: scale(48), borderRadius: moderateScale(12), backgroundColor: isDark ? '#334155' : '#F0FDFA', alignItems: 'center', justifyContent: 'center', marginRight: scale(16) }}>
+                                        <Ionicons name={item.icon as any} size={normalizeFont(24)} color="#0D9488" />
                                    </View>
                                    <View style={{ flex: 1 }}>
-                                       <Text style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#FFF' : '#0F172A', marginBottom: 4 }}>{item.title}</Text>
-                                       <Text style={{ fontSize: 13, color: isDark ? '#94A3B8' : '#64748B' }}>{item.desc}</Text>
+                                       <Text style={{ fontSize: normalizeFont(16), fontWeight: '700', color: isDark ? '#FFF' : '#0F172A', marginBottom: verticalScale(4) }}>{item.title}</Text>
+                                       <Text style={{ fontSize: normalizeFont(13), color: isDark ? '#94A3B8' : '#64748B' }}>{item.desc}</Text>
                                    </View>
-                                   <Ionicons name="chevron-forward" size={20} color={isDark ? '#64748B' : '#CBD5E1'} />
+                                   <Ionicons name="chevron-forward" size={normalizeFont(20)} color={isDark ? '#64748B' : '#CBD5E1'} />
                                </TouchableOpacity>
                            ))}
                         </View>
@@ -1037,13 +1078,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
           <View style={styles.modalOverlay}>
               <View style={[styles.modalCard, { backgroundColor: isDark ? '#1E293B' : '#FFF', borderWidth: 1, borderColor: isDark ? '#334155' : 'transparent' }]}>
                   
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                      <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                          <Ionicons name="warning" size={20} color="#EF4444" />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: verticalScale(16) }}>
+                      <View style={{ width: scale(40), height: scale(40), borderRadius: moderateScale(10), backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2', alignItems: 'center', justifyContent: 'center', marginRight: scale(12) }}>
+                          <Ionicons name="warning" size={normalizeFont(20)} color="#EF4444" />
                       </View>
                       <View>
-                          <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A', marginBottom: 2, fontSize: 18 }]}>Report Issue</Text>
-                          <Text style={{ fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>Help us improve the system</Text>
+                          <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A', marginBottom: verticalScale(2), fontSize: normalizeFont(18) }]}>Report Issue</Text>
+                          <Text style={{ fontSize: normalizeFont(12), color: isDark ? '#94A3B8' : '#64748B' }}>Help us improve the system</Text>
                       </View>
                   </View>
                   
@@ -1059,18 +1100,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ userName, onLogout
                   >
                       {reportImage ? (
                           <>
-                             <Image source={{ uri: reportImage }} style={{ width: 40, height: 40, borderRadius: 8 }} />
+                             <Image source={{ uri: reportImage }} style={{ width: scale(40), height: scale(40), borderRadius: moderateScale(8) }} />
                              <View style={{ justifyContent: 'center' }}>
-                                 <Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>Image Attached</Text>
-                                 <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 11 }}>Tap to change</Text>
+                                 <Text style={{ color: '#10B981', fontSize: normalizeFont(13), fontWeight: '600' }}>Image Attached</Text>
+                                 <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: normalizeFont(11) }}>Tap to change</Text>
                              </View>
                           </>
                       ) : (
                           <>
-                            <View style={{ width: 32, height: 32, borderRadius: 100, backgroundColor: isDark ? '#334155' : '#E2E8F0', alignItems: 'center', justifyContent: 'center' }}>
-                                <Ionicons name="image" size={16} color="#94A3B8" />
+                            <View style={{ width: scale(32), height: scale(32), borderRadius: moderateScale(100), backgroundColor: isDark ? '#334155' : '#E2E8F0', alignItems: 'center', justifyContent: 'center' }}>
+                                <Ionicons name="image" size={normalizeFont(16)} color="#94A3B8" />
                             </View>
-                            <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 13, fontWeight: '600' }}>
+                            <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: normalizeFont(13), fontWeight: '600' }}>
                                 Attach Screenshot (Optional)
                             </Text>
                           </>
@@ -1097,74 +1138,74 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 0 },
-  section: { marginBottom: 24, paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, marginLeft: 4 },
-  menuCard: { borderRadius: 16, overflow: 'hidden', shadowColor: '#64748B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  section: { marginBottom: verticalScale(24), paddingHorizontal: scale(20) },
+  sectionTitle: { fontSize: normalizeFont(12), fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: verticalScale(12), marginLeft: scale(4) },
+  menuCard: { borderRadius: moderateScale(16), overflow: 'hidden', shadowColor: '#64748B', shadowOffset: { width: 0, height: verticalScale(4) }, shadowOpacity: 0.05, shadowRadius: moderateScale(12), elevation: 2 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', padding: scale(16) },
   menuItemBorder: { borderBottomWidth: 1 },
-  menuIconContainer: { width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  menuIconContainer: { width: scale(32), height: scale(32), borderRadius: moderateScale(8), justifyContent: 'center', alignItems: 'center', marginRight: scale(14) },
   menuContent: { flex: 1 },
-  menuLabel: { fontSize: 15, fontWeight: '600' },
-  menuValue: { fontSize: 13, marginTop: 2 },
-  logoutContainer: { marginTop: 10 },
-  versionText: { textAlign: 'center', fontSize: 12, marginTop: 24, fontWeight: '500' },
+  menuLabel: { fontSize: normalizeFont(15), fontWeight: '600' },
+  menuValue: { fontSize: normalizeFont(13), marginTop: verticalScale(2) },
+  logoutContainer: { marginTop: verticalScale(10) },
+  versionText: { textAlign: 'center', fontSize: normalizeFont(12), marginTop: verticalScale(24), fontWeight: '500' },
   
   // Modal & Toast
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 },
-  modalCard: { borderRadius: 24, padding: 24 },
-  modalCardFull: { borderRadius: 24, padding: 24, maxHeight: '80%' },
-  modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 12 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  inputLabel: { fontSize: 11, fontWeight: '700', marginBottom: 6, letterSpacing: 0.5 },
-  input: { borderRadius: 12, padding: 12, borderWidth: 1, fontSize: 15, borderColor: '#E2E8F0', marginBottom: 16 },
-  dateBtn: { padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#334155', alignItems: 'center' },
-  photoUpload: { height: 80, borderWidth: 2, borderStyle: 'dashed', borderRadius: 12, justifyContent: 'center', alignItems: 'center', gap: 8 },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12, gap: 12 },
-  cancelBtn: { paddingVertical: 12, paddingHorizontal: 16 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: scale(24) },
+  modalCard: { borderRadius: moderateScale(24), padding: scale(24) },
+  modalCardFull: { borderRadius: moderateScale(24), padding: scale(24), maxHeight: '80%' },
+  modalTitle: { fontSize: normalizeFont(20), fontWeight: '700', marginBottom: verticalScale(12) },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: verticalScale(16) },
+  inputLabel: { fontSize: normalizeFont(11), fontWeight: '700', marginBottom: verticalScale(6), letterSpacing: 0.5 },
+  input: { borderRadius: moderateScale(12), padding: scale(12), borderWidth: 1, fontSize: normalizeFont(15), borderColor: '#E2E8F0', marginBottom: verticalScale(16) },
+  dateBtn: { padding: scale(12), borderRadius: moderateScale(12), borderWidth: 1, borderColor: '#334155', alignItems: 'center' },
+  photoUpload: { height: verticalScale(80), borderWidth: 2, borderStyle: 'dashed', borderRadius: moderateScale(12), justifyContent: 'center', alignItems: 'center', gap: scale(8) },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: verticalScale(12), gap: scale(12) },
+  cancelBtn: { paddingVertical: verticalScale(12), paddingHorizontal: scale(16) },
   cancelText: { color: '#64748B', fontWeight: '600' },
-  saveBtn: { backgroundColor: '#0F766E', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, alignItems: 'center' },
+  saveBtn: { backgroundColor: '#0F766E', paddingVertical: verticalScale(12), paddingHorizontal: scale(24), borderRadius: moderateScale(12), alignItems: 'center' },
   saveText: { color: '#FFF', fontWeight: '700' },
   
   // Toast
-  toastContainer: { position: 'absolute', top: 60, left: 20, right: 20, zIndex: 100, alignItems: 'center' },
-  toastContent: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 100, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5, gap: 8, borderWidth: 1, borderColor: '#E2E8F0' },
-  toastText: { fontWeight: '600', color: '#0F766E', fontSize: 13 },
+  toastContainer: { position: 'absolute', top: verticalScale(60), left: scale(20), right: scale(20), zIndex: 100, alignItems: 'center' },
+  toastContent: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: scale(16), paddingVertical: verticalScale(12), borderRadius: moderateScale(100), shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: moderateScale(10), elevation: 5, gap: scale(8), borderWidth: 1, borderColor: '#E2E8F0' },
+  toastText: { fontWeight: '600', color: '#0F766E', fontSize: normalizeFont(13) },
 
   // Schedule Table
   tableRow: { flexDirection: 'row' },
-  cellFixed: { width: 70, padding: 12, borderWidth: 0.5, alignItems: 'center', justifyContent: 'center' },
-  cell: { width: 90, padding: 12, borderWidth: 0.5, alignItems: 'center', justifyContent: 'center' },
-  cellText: { fontSize: 13, textAlign: 'center' },
-  cellTextBold: { fontSize: 13, fontWeight: '800', textAlign: 'center' },
+  cellFixed: { width: scale(70), padding: scale(12), borderWidth: 0.5, alignItems: 'center', justifyContent: 'center' },
+  cell: { width: scale(90), padding: scale(12), borderWidth: 0.5, alignItems: 'center', justifyContent: 'center' },
+  cellText: { fontSize: normalizeFont(13), textAlign: 'center' },
+  cellTextBold: { fontSize: normalizeFont(13), fontWeight: '800', textAlign: 'center' },
   
   // Date Picker
-  dateOption: { paddingVertical: 16, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dateOption: { paddingVertical: verticalScale(16), borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
   // Background Orbs
   orb: {
     position: 'absolute',
-    borderRadius: 200,
+    borderRadius: moderateScale(200),
   },
   orb1: {
-    width: 300,
-    height: 300,
+    width: scale(300),
+    height: scale(300),
     backgroundColor: 'rgba(61, 220, 151, 0.15)',
-    top: -100,
-    right: -100,
+    top: -verticalScale(100),
+    right: -scale(100),
   },
   orb2: {
-    width: 250,
-    height: 250,
+    width: scale(250),
+    height: scale(250),
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    bottom: 200,
-    left: -80,
+    bottom: verticalScale(200),
+    left: -scale(80),
   },
   orb3: {
-    width: 180,
-    height: 180,
+    width: scale(180),
+    height: scale(180),
     backgroundColor: 'rgba(61, 220, 151, 0.08)',
-    bottom: 400,
-    right: -40,
+    bottom: verticalScale(400),
+    right: -scale(40),
   },
 });
 

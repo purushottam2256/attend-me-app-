@@ -19,6 +19,7 @@ import { useNavigation } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 
 import { useTheme } from "../../../contexts";
+import { scale, verticalScale, moderateScale, normalizeFont } from "../../../utils/responsive";
 import { supabase } from "../../../config/supabase";
 import { ZenToast } from "../../../components/ZenToast";
 import { ConfirmationModal } from "../../../components/ConfirmationModal";
@@ -229,14 +230,14 @@ export const ManagePermissionsScreen: React.FC = () => {
             )}
           </View>
           {isActive && (
-            <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flexDirection: "row", gap: scale(12) }}>
               <TouchableOpacity
                 onPress={() => startEdit(item)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons
                   name="create-outline"
-                  size={20}
+                  size={normalizeFont(20)}
                   color={colors.textSec}
                 />
               </TouchableOpacity>
@@ -246,7 +247,7 @@ export const ManagePermissionsScreen: React.FC = () => {
               >
                 <Ionicons
                   name="trash-outline"
-                  size={20}
+                  size={normalizeFont(20)}
                   color={colors.delete}
                 />
               </TouchableOpacity>
@@ -265,7 +266,7 @@ export const ManagePermissionsScreen: React.FC = () => {
           <View style={styles.dateRow}>
             <Ionicons
               name="calendar-outline"
-              size={16}
+              size={normalizeFont(16)}
               color={colors.textSec}
             />
             <Text style={[styles.dateText, { color: colors.text }]}>
@@ -320,28 +321,28 @@ export const ManagePermissionsScreen: React.FC = () => {
       <View
         style={[
           styles.header,
-          { paddingTop: insets.top + 16, borderBottomColor: colors.border },
+          { paddingTop: insets.top + verticalScale(16), borderBottomColor: colors.border },
         ]}
       >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={normalizeFont(24)} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           Manage Permissions
         </Text>
-        <View style={{ flexDirection: "row", gap: 12 }}>
+        <View style={{ flexDirection: "row", gap: scale(12) }}>
           <TouchableOpacity onPress={() => setShowFilters(!showFilters)}>
             <Ionicons
               name={showFilters ? "filter" : "filter-outline"}
-              size={20}
+              size={normalizeFont(20)}
               color={colors.text}
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={onRefresh}>
-            <Ionicons name="refresh" size={20} color={colors.text} />
+            <Ionicons name="refresh" size={normalizeFont(20)} color={colors.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -354,10 +355,10 @@ export const ManagePermissionsScreen: React.FC = () => {
               styles.tabs,
               {
                 backgroundColor: colors.card,
-                marginHorizontal: 16,
-                marginTop: 16,
-                borderRadius: 12,
-                padding: 4,
+                marginHorizontal: scale(16),
+                marginTop: verticalScale(16),
+                borderRadius: moderateScale(12),
+                padding: scale(4),
               },
             ]}
           >
@@ -408,10 +409,10 @@ export const ManagePermissionsScreen: React.FC = () => {
           <View
             style={{
               flexDirection: "row",
-              marginHorizontal: 16,
-              marginTop: 12,
-              marginBottom: 4,
-              gap: 8,
+              marginHorizontal: scale(16),
+              marginTop: verticalScale(12),
+              marginBottom: verticalScale(4),
+              gap: scale(8),
             }}
           >
             {["all", "od", "leave"].map((t) => (
@@ -419,9 +420,9 @@ export const ManagePermissionsScreen: React.FC = () => {
                 key={t}
                 onPress={() => setTypeFilter(t as any)}
                 style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 20,
+                  paddingHorizontal: scale(16),
+                  paddingVertical: verticalScale(8),
+                  borderRadius: moderateScale(20),
                   backgroundColor:
                     typeFilter === t
                       ? t === "leave"
@@ -436,7 +437,7 @@ export const ManagePermissionsScreen: React.FC = () => {
               >
                 <Text
                   style={{
-                    fontSize: 13,
+                    fontSize: normalizeFont(13),
                     fontWeight: "600",
                     color: typeFilter === t ? "#FFFFFF" : colors.textSec,
                     textTransform: "capitalize",
@@ -491,7 +492,7 @@ export const ManagePermissionsScreen: React.FC = () => {
               {
                 borderBottomColor: colors.border,
                 backgroundColor: colors.card,
-                paddingTop: insets.top + 20, // Ensure safe area + padding
+                paddingTop: insets.top + verticalScale(20), // Ensure safe area + padding
               },
             ]}
           >
@@ -501,25 +502,25 @@ export const ManagePermissionsScreen: React.FC = () => {
             <TouchableOpacity
               onPress={() => setEditingPermission(null)}
               style={{
-                padding: 4,
-                borderRadius: 20,
+                padding: scale(4),
+                borderRadius: moderateScale(20),
                 backgroundColor: isDark
                   ? "rgba(255,255,255,0.1)"
                   : "rgba(0,0,0,0.05)",
               }}
             >
-              <Ionicons name="close" size={24} color={colors.text} />
+              <Ionicons name="close" size={normalizeFont(24)} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           <ScrollView contentContainerStyle={styles.modalContent}>
             {editingPermission && (
-              <View style={{ gap: 24 }}>
+              <View style={{ gap: verticalScale(24) }}>
                 <View
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: 16,
+                    gap: scale(16),
                   }}
                 >
                   <View
@@ -527,9 +528,9 @@ export const ManagePermissionsScreen: React.FC = () => {
                       styles.avatar,
                       {
                         backgroundColor: isDark ? "#334155" : "#E2E8F0",
-                        width: 50,
-                        height: 50,
-                        borderRadius: 25,
+                        width: scale(50),
+                        height: scale(50),
+                        borderRadius: moderateScale(25),
                         alignItems: "center",
                         justifyContent: "center",
                       },
@@ -537,7 +538,7 @@ export const ManagePermissionsScreen: React.FC = () => {
                   >
                     <Text
                       style={{
-                        fontSize: 18,
+                        fontSize: normalizeFont(18),
                         fontWeight: "700",
                         color: colors.textSec,
                       }}
@@ -551,18 +552,18 @@ export const ManagePermissionsScreen: React.FC = () => {
                     <Text
                       style={[
                         styles.staticText,
-                        { color: colors.text, fontSize: 18 },
+                        { color: colors.text, fontSize: normalizeFont(18) },
                       ]}
                     >
                       {editingPermission.student?.full_name}
                     </Text>
-                    <Text style={{ color: colors.textSec, marginTop: 2 }}>
+                    <Text style={{ color: colors.textSec, marginTop: verticalScale(2) }}>
                       {editingPermission.student?.roll_no}
                     </Text>
                   </View>
                 </View>
 
-                <View style={{ flexDirection: "row", gap: 12 }}>
+                <View style={{ flexDirection: "row", gap: scale(12) }}>
                   <View
                     style={[
                       styles.badge,
@@ -571,8 +572,8 @@ export const ManagePermissionsScreen: React.FC = () => {
                           editingPermission.type === "leave"
                             ? "rgba(249, 115, 22, 0.1)"
                             : "rgba(99, 102, 241, 0.1)",
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
+                        paddingHorizontal: scale(12),
+                        paddingVertical: verticalScale(6),
                       },
                     ]}
                   >
@@ -584,7 +585,7 @@ export const ManagePermissionsScreen: React.FC = () => {
                             editingPermission.type === "leave"
                               ? colors.leave
                               : colors.od,
-                          fontSize: 13,
+                          fontSize: normalizeFont(13),
                         },
                       ]}
                     >
@@ -598,7 +599,7 @@ export const ManagePermissionsScreen: React.FC = () => {
                     <Text
                       style={[
                         styles.subLabel,
-                        { color: colors.textSec, marginBottom: 8 },
+                        { color: colors.textSec, marginBottom: verticalScale(8) },
                       ]}
                     >
                       From Date
@@ -615,7 +616,7 @@ export const ManagePermissionsScreen: React.FC = () => {
                     >
                       <Ionicons
                         name="calendar-outline"
-                        size={20}
+                        size={normalizeFont(20)}
                         color={colors.textSec}
                       />
                       <Text style={{ color: colors.text, fontWeight: "500" }}>
@@ -627,7 +628,7 @@ export const ManagePermissionsScreen: React.FC = () => {
                     <Text
                       style={[
                         styles.subLabel,
-                        { color: colors.textSec, marginBottom: 8 },
+                        { color: colors.textSec, marginBottom: verticalScale(8) },
                       ]}
                     >
                       To Date
@@ -658,7 +659,7 @@ export const ManagePermissionsScreen: React.FC = () => {
                   <Text
                     style={[
                       styles.subLabel,
-                      { color: colors.textSec, marginBottom: 8 },
+                      { color: colors.textSec, marginBottom: verticalScale(8) },
                     ]}
                   >
                     Reason
@@ -694,7 +695,7 @@ export const ManagePermissionsScreen: React.FC = () => {
                           ? colors.leave
                           : colors.od,
                       shadowOpacity: 0.3,
-                      shadowRadius: 8,
+                      shadowRadius: moderateScale(8),
                       elevation: 4,
                     },
                   ]}
@@ -753,119 +754,119 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: scale(16),
+    paddingBottom: verticalScale(16),
     borderBottomWidth: 1,
   },
-  backBtn: { padding: 8, marginLeft: -8 },
-  headerTitle: { fontSize: 18, fontWeight: "700" },
+  backBtn: { padding: scale(8), marginLeft: scale(-8) },
+  headerTitle: { fontSize: normalizeFont(18), fontWeight: "700" },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 40,
+    paddingTop: verticalScale(40),
   },
-  list: { padding: 16, paddingBottom: 40 },
+  list: { padding: scale(16), paddingBottom: verticalScale(40) },
   card: {
-    borderRadius: 16,
+    borderRadius: moderateScale(16),
     borderWidth: 1,
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
     overflow: "hidden",
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 12,
+    padding: scale(12),
     borderBottomWidth: 1,
   },
   headerLeft: {
     flexDirection: "row",
-    gap: 8,
+    gap: scale(8),
   },
   typeBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: scale(10),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(8),
   },
   typeText: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: "700",
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(8),
   },
-  badgeText: { fontSize: 11, fontWeight: "600" },
-  cardBody: { padding: 16, gap: 4 },
-  studentName: { fontSize: 16, fontWeight: "600" },
-  rollNo: { fontSize: 13, marginBottom: 8 },
-  dateRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  dateText: { fontSize: 14, fontWeight: "500" },
+  badgeText: { fontSize: normalizeFont(11), fontWeight: "600" },
+  cardBody: { padding: scale(16), gap: verticalScale(4) },
+  studentName: { fontSize: normalizeFont(16), fontWeight: "600" },
+  rollNo: { fontSize: normalizeFont(13), marginBottom: verticalScale(8) },
+  dateRow: { flexDirection: "row", alignItems: "center", gap: scale(6) },
+  dateText: { fontSize: normalizeFont(14), fontWeight: "500" },
   detailsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginTop: 8,
+    gap: scale(12),
+    marginTop: verticalScale(8),
   },
   chip: {
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(2),
+    borderRadius: moderateScale(4),
   },
-  chipText: { fontSize: 11, fontWeight: "500", textTransform: "capitalize" },
-  timeText: { fontSize: 13 },
-  reason: { fontStyle: "italic", fontSize: 13, marginTop: 8, opacity: 0.8 },
-  tabs: { flexDirection: "row", borderRadius: 12 },
-  tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 10 },
-  tabText: { fontSize: 14 },
+  chipText: { fontSize: normalizeFont(11), fontWeight: "500", textTransform: "capitalize" },
+  timeText: { fontSize: normalizeFont(13) },
+  reason: { fontStyle: "italic", fontSize: normalizeFont(13), marginTop: verticalScale(8), opacity: 0.8 },
+  tabs: { flexDirection: "row", borderRadius: moderateScale(12) },
+  tab: { flex: 1, paddingVertical: verticalScale(10), alignItems: "center", borderRadius: moderateScale(10) },
+  tabText: { fontSize: normalizeFont(14) },
   // Modal Styles
   modalContainer: { flex: 1 },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    padding: scale(16),
     borderBottomWidth: 1,
   },
-  modalTitle: { fontSize: 18, fontWeight: "700" },
-  modalContent: { padding: 20 },
+  modalTitle: { fontSize: normalizeFont(18), fontWeight: "700" },
+  modalContent: { padding: scale(20) },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: "600",
     textTransform: "uppercase",
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
-  subLabel: { fontSize: 12, fontWeight: "500" },
-  staticText: { fontSize: 16, fontWeight: "500" },
-  datePickerRow: { flexDirection: "row", gap: 16 },
+  subLabel: { fontSize: normalizeFont(12), fontWeight: "500" },
+  staticText: { fontSize: normalizeFont(16), fontWeight: "500" },
+  datePickerRow: { flexDirection: "row", gap: scale(16) },
   reasonInput: {
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    height: 100,
+    borderRadius: moderateScale(8),
+    padding: scale(12),
+    height: verticalScale(100),
     textAlignVertical: "top",
-    fontSize: 15,
+    fontSize: normalizeFont(15),
   },
   saveBtn: {
-    marginTop: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
+    marginTop: verticalScale(24),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(12),
     alignItems: "center",
   },
-  saveBtnText: { color: "white", fontSize: 16, fontWeight: "bold" },
+  saveBtnText: { color: "white", fontSize: normalizeFont(16), fontWeight: "bold" },
   dateInput: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: scale(8),
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    height: 50,
+    borderRadius: moderateScale(8),
+    padding: scale(12),
+    height: verticalScale(50),
   },
   avatar: {
-    // defined inline for dynamic styling, no base style needed or add here if preferred
+    // defined inline for dynamic styling
   },
 });

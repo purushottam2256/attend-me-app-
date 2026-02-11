@@ -29,6 +29,7 @@ import { CustomDateTimePicker } from '../components/CustomDateTimePicker';
 import * as Haptics from "expo-haptics";
 
 import { useTheme } from "../../../contexts";
+import { scale, verticalScale, moderateScale, normalizeFont } from "../../../utils/responsive";
 import { supabase } from "../../../config/supabase";
 import { StudentSelectionList } from '../components/StudentSelectionList';
 import {
@@ -211,7 +212,7 @@ export const PermissionScreen: React.FC = () => {
     >
       <View style={[styles.modalContent, { backgroundColor: colors.bg, flex: 1, padding: 0, borderRadius: 0 }]}>
           <View style={{ 
-            padding: 16, 
+            padding: scale(16), 
             borderBottomWidth: 1, 
             borderBottomColor: colors.border, 
             flexDirection: 'row', 
@@ -220,13 +221,13 @@ export const PermissionScreen: React.FC = () => {
             backgroundColor: colors.card,
           }}>
             <TouchableOpacity onPress={() => setShowStudentModal(false)}>
-              <Text style={{ color: colors.textSec, fontSize: 16 }}>Cancel</Text>
+              <Text style={{ color: colors.textSec, fontSize: normalizeFont(16) }}>Cancel</Text>
             </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.text, marginBottom: 0, fontSize: 17 }]}>
+            <Text style={[styles.modalTitle, { color: colors.text, marginBottom: 0, fontSize: normalizeFont(17) }]}>
               Select Students ({selectedStudentIds.size})
             </Text>
             <TouchableOpacity onPress={() => setShowStudentModal(false)}>
-              <Text style={{ color: type === 'leave' ? colors.leave.primary : colors.od.primary, fontWeight: '600', fontSize: 16 }}>Done</Text>
+              <Text style={{ color: type === 'leave' ? colors.leave.primary : colors.od.primary, fontWeight: '600', fontSize: normalizeFont(16) }}>Done</Text>
             </TouchableOpacity>
           </View>
           
@@ -242,27 +243,27 @@ export const PermissionScreen: React.FC = () => {
 
           {/* Floating Done Button */}
           {selectedStudentIds.size > 0 && (
-            <View style={{ position: 'absolute', bottom: 30, left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' }}>
+            <View style={{ position: 'absolute', bottom: verticalScale(30), left: 0, right: 0, alignItems: 'center', pointerEvents: 'box-none' }}>
               <TouchableOpacity 
                 style={{
                   backgroundColor: type === 'leave' ? colors.leave.primary : colors.od.primary,
-                  paddingHorizontal: 32,
-                  paddingVertical: 14,
-                  borderRadius: 30,
+                  paddingHorizontal: scale(32),
+                  paddingVertical: verticalScale(14),
+                  borderRadius: moderateScale(30),
                   shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 4 },
+                  shadowOffset: { width: 0, height: verticalScale(4) },
                   shadowOpacity: 0.3,
-                  shadowRadius: 4.65,
+                  shadowRadius: moderateScale(4.65),
                   elevation: 8,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 8
+                  gap: scale(8)
                 }}
                 onPress={() => setShowStudentModal(false)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="checkmark" size={20} color="#FFF" />
-                <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '700' }}>
+                <Ionicons name="checkmark" size={normalizeFont(20)} color="#FFF" />
+                <Text style={{ color: '#FFF', fontSize: normalizeFont(16), fontWeight: '700' }}>
                   Done ({selectedStudentIds.size})
                 </Text>
               </TouchableOpacity>
@@ -278,19 +279,19 @@ export const PermissionScreen: React.FC = () => {
       <View
         style={[
           styles.header,
-          { paddingTop: insets.top + 16, borderBottomColor: colors.border },
+          { paddingTop: insets.top + verticalScale(16), borderBottomColor: colors.border },
         ]}
       >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Ionicons name="arrow-back" size={normalizeFont(24)} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>
           Grant Permission
         </Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: scale(24) }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -309,7 +310,7 @@ export const PermissionScreen: React.FC = () => {
           >
             <Ionicons
               name="calendar"
-              size={20}
+              size={normalizeFont(20)}
               color={type === "leave" ? colors.leave.dark : colors.textSec}
             />
             <Text
@@ -338,7 +339,7 @@ export const PermissionScreen: React.FC = () => {
           >
             <Ionicons
               name="briefcase"
-              size={20}
+              size={normalizeFont(20)}
               color={type === "od" ? colors.od.dark : colors.textSec}
             />
             <Text
@@ -380,7 +381,7 @@ export const PermissionScreen: React.FC = () => {
                 Select students
               </Text>
             )}
-            <Ionicons name="chevron-down" size={20} color={colors.textSec} />
+            <Ionicons name="chevron-down" size={normalizeFont(20)} color={colors.textSec} />
           </TouchableOpacity>
 
           {/* Dates */}
@@ -401,7 +402,7 @@ export const PermissionScreen: React.FC = () => {
                 </Text>
                 <Ionicons
                   name="calendar-outline"
-                  size={18}
+                  size={normalizeFont(18)}
                   color={colors.textSec}
                 />
               </TouchableOpacity>
@@ -644,112 +645,112 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: scale(16),
+    paddingBottom: verticalScale(16),
     borderBottomWidth: 1,
   },
   backBtn: {
-    padding: 8,
-    marginLeft: -8,
+    padding: scale(8),
+    marginLeft: scale(-8),
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: "700",
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: scale(20),
+    paddingBottom: verticalScale(40),
   },
   typeContainer: {
     flexDirection: "row",
-    padding: 4,
-    borderRadius: 12,
-    marginBottom: 24,
+    padding: scale(4),
+    borderRadius: moderateScale(12),
+    marginBottom: verticalScale(24),
   },
   typeBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingVertical: 10,
-    borderRadius: 10,
+    gap: scale(8),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(10),
   },
   typeText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
   },
   form: {
-    gap: 16,
+    gap: verticalScale(16),
   },
   label: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: "600",
-    marginBottom: -8,
+    marginBottom: verticalScale(-8),
   },
   input: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 14,
-    borderRadius: 12,
+    padding: scale(14),
+    borderRadius: moderateScale(12),
     borderWidth: 1,
   },
   inputText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: "500",
   },
   placeholder: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
   },
   helperText: {
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: normalizeFont(12),
+    marginTop: verticalScale(2),
   },
   row: {
     flexDirection: "row",
-    gap: 12,
+    gap: scale(12),
   },
   col: {
     flex: 1,
-    gap: 8,
+    gap: verticalScale(8),
   },
   chipsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: scale(8),
   },
   chip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    paddingVertical: verticalScale(6),
+    paddingHorizontal: scale(12),
+    borderRadius: moderateScale(20),
     borderWidth: 1,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: "600",
   },
   textArea: {
-    padding: 14,
-    borderRadius: 12,
+    padding: scale(14),
+    borderRadius: moderateScale(12),
     borderWidth: 1,
-    minHeight: 80,
+    minHeight: verticalScale(80),
     textAlignVertical: "top",
-    fontSize: 15,
+    fontSize: normalizeFont(15),
   },
   submitBtn: {
-    marginTop: 32,
-    paddingVertical: 16,
-    borderRadius: 14,
+    marginTop: verticalScale(32),
+    paddingVertical: verticalScale(16),
+    borderRadius: moderateScale(14),
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 4,
   },
   submitBtnText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: "700",
   },
   modalOverlay: {
@@ -758,40 +759,40 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     height: "70%",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
+    borderTopLeftRadius: moderateScale(24),
+    borderTopRightRadius: moderateScale(24),
+    padding: scale(20),
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: "700",
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   studentList: {
     flex: 1,
   },
   studentItem: {
-    paddingVertical: 16,
+    paddingVertical: verticalScale(16),
     borderBottomWidth: 1,
   },
   studentName: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: "600",
   },
   studentRoll: {
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: normalizeFont(13),
+    marginTop: verticalScale(2),
   },
   closeBtn: {
-    marginTop: 16,
-    paddingVertical: 14,
+    marginTop: verticalScale(16),
+    paddingVertical: verticalScale(14),
     backgroundColor: "#334155",
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
     alignItems: "center",
   },
   closeBtnText: {
     color: "#FFF",
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: "600",
   },
 });

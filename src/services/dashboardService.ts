@@ -44,6 +44,7 @@ export interface AttendanceSession {
   batch?: number | null;
   present_count: number;
   absent_count: number;
+  od_count?: number;
   total_students: number;
 }
 
@@ -600,6 +601,7 @@ export async function getAttendanceHistory(
         batch,
         present_count,
         absent_count,
+        od_count,
         total_students,
         is_substitute,
         substitute_faculty_id,

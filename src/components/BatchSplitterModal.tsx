@@ -15,6 +15,7 @@ import {
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../utils/responsive';
 
 interface BatchSplitterModalProps {
   visible: boolean;
@@ -95,7 +96,7 @@ export const BatchSplitterModal: React.FC<BatchSplitterModalProps> = ({
                     activeOpacity={0.7}
                   >
                     <View style={[styles.iconContainer, { backgroundColor: `${option.color}15` }]}>
-                      <Ionicons name={option.icon} size={24} color={option.color} />
+                      <Ionicons name={option.icon} size={normalizeFont(24)} color={option.color} />
                     </View>
                     <View style={styles.optionContent}>
                       <Text style={[styles.optionLabel, { color: isDark ? '#FFFFFF' : '#0F172A' }]}>
@@ -107,7 +108,7 @@ export const BatchSplitterModal: React.FC<BatchSplitterModalProps> = ({
                     </View>
                     <Ionicons 
                       name="chevron-forward" 
-                      size={20} 
+                      size={normalizeFont(20)} 
                       color={isDark ? '#475569' : '#CBD5E1'} 
                     />
                   </TouchableOpacity>
@@ -131,68 +132,68 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingBottom: 32,
+    paddingHorizontal: scale(16),
+    paddingBottom: verticalScale(32),
   },
   modalContent: {
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: moderateScale(24),
+    padding: scale(24),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
+    shadowOffset: { width: 0, height: verticalScale(-4) },
     shadowOpacity: 0.15,
-    shadowRadius: 20,
+    shadowRadius: moderateScale(20),
     elevation: 10,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   title: {
-    fontSize: 22,
+    fontSize: normalizeFont(22),
     fontWeight: '700',
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '500',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   options: {
-    gap: 12,
+    gap: scale(12),
   },
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
+    padding: scale(16),
+    borderRadius: moderateScale(16),
     borderWidth: 1,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: scale(48),
+    height: scale(48),
+    borderRadius: moderateScale(14),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: scale(14),
   },
   optionContent: {
     flex: 1,
   },
   optionLabel: {
-    fontSize: 17,
+    fontSize: normalizeFont(17),
     fontWeight: '600',
   },
   optionDesc: {
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: normalizeFont(13),
+    marginTop: verticalScale(2),
   },
   cancelButton: {
     alignItems: 'center',
-    paddingVertical: 16,
-    marginTop: 12,
+    paddingVertical: verticalScale(16),
+    marginTop: verticalScale(12),
   },
   cancelText: {
-    fontSize: 17,
+    fontSize: normalizeFont(17),
     fontWeight: '600',
     color: '#EF4444',
   },

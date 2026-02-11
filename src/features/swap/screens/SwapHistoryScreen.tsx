@@ -21,6 +21,7 @@ import { useTheme } from '../../../contexts';
 import { supabase } from '../../../config/supabase';
 import { swapStyles as styles } from '../styles/SwapScreen.styles';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 type Tab = 'substitute' | 'swap';
 
@@ -200,7 +201,7 @@ export const SwapHistoryScreen: React.FC = () => {
 
   const renderStatusBadge = (status: string) => (
     <View style={[styles.requestBadge, { backgroundColor: getStatusColor(status) + '15', borderWidth: 1, borderColor: getStatusColor(status) + '30' }]}>
-        <Text style={[styles.requestBadgeText, { color: getStatusColor(status), fontSize: 10, fontWeight: '700' }]}>
+    <Text style={[styles.requestBadgeText, { color: getStatusColor(status), fontSize: normalizeFont(10), fontWeight: '700' }]}>
             {status?.toUpperCase()}
         </Text>
     </View>
@@ -209,61 +210,61 @@ export const SwapHistoryScreen: React.FC = () => {
 
 
   const renderSubItem = ({ item }: { item: any }) => (
-    <View style={[styles.requestCard, { backgroundColor: colors.surface, borderColor: colors.border, marginHorizontal: 16, marginBottom: 12, padding: 0, overflow: 'hidden' }]}>
+    <View style={[styles.requestCard, { backgroundColor: colors.surface, borderColor: colors.border, marginHorizontal: scale(16), marginBottom: verticalScale(12), padding: 0, overflow: 'hidden' }]}>
         {/* Header */}
-        <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.accent + '10' }}>
+        <View style={{ padding: scale(12), borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.accent + '10' }}>
             <View>
-                <Text style={{ fontSize: 12, color: colors.accent, fontWeight: '700' }}>SUBSTITUTION REQUEST</Text>
-                <Text style={{ fontSize: 10, color: colors.textSecondary }}>{format(new Date(item.date), 'MMMM d, yyyy')}</Text>
+                <Text style={{ fontSize: normalizeFont(12), color: colors.accent, fontWeight: '700' }}>SUBSTITUTION REQUEST</Text>
+                <Text style={{ fontSize: normalizeFont(10), color: colors.textSecondary }}>{format(new Date(item.date), 'MMMM d, yyyy')}</Text>
             </View>
             {renderStatusBadge(item.status)}
         </View>
 
-        <View style={{ padding: 12 }}>
+        <View style={{ padding: scale(12) }}>
             {/* My Class Info */}
-            <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, color: colors.textSecondary, marginBottom: 6, fontWeight: '600' }}>MY CLASS DETAILS</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                     <View style={{ backgroundColor: colors.background, padding: 6, borderRadius: 6, borderWidth: 1, borderColor: colors.border }}>
-                         <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: '700' }}>
+            <View style={{ marginBottom: verticalScale(12) }}>
+                <Text style={{ fontSize: normalizeFont(11), color: colors.textSecondary, marginBottom: verticalScale(6), fontWeight: '600' }}>MY CLASS DETAILS</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: scale(8) }}>
+                     <View style={{ backgroundColor: colors.background, padding: scale(6), borderRadius: moderateScale(6), borderWidth: 1, borderColor: colors.border }}>
+                         <Text style={{ color: colors.textPrimary, fontSize: normalizeFont(12), fontWeight: '700' }}>
                              {item.target_dept}-{item.target_year}-{item.target_section}
                          </Text>
                      </View>
-                     <View style={{ backgroundColor: colors.background, padding: 6, borderRadius: 6, borderWidth: 1, borderColor: colors.border }}>
-                         <Text style={{ color: colors.textPrimary, fontSize: 12 }}>
+                     <View style={{ backgroundColor: colors.background, padding: scale(6), borderRadius: moderateScale(6), borderWidth: 1, borderColor: colors.border }}>
+                         <Text style={{ color: colors.textPrimary, fontSize: normalizeFont(12) }}>
                              {item.slot_id}
                          </Text>
                      </View>
-                     <View style={{ backgroundColor: colors.background, padding: 6, borderRadius: 6, borderWidth: 1, borderColor: colors.border }}>
-                         <Text style={{ color: colors.textPrimary, fontSize: 12 }}>
+                     <View style={{ backgroundColor: colors.background, padding: scale(6), borderRadius: moderateScale(6), borderWidth: 1, borderColor: colors.border }}>
+                         <Text style={{ color: colors.textPrimary, fontSize: normalizeFont(12) }}>
                              {item.time_range}
                          </Text>
                      </View>
                 </View>
-                <Text style={{ marginTop: 6, color: colors.textPrimary, fontWeight: '500' }}>
+                <Text style={{ marginTop: verticalScale(6), color: colors.textPrimary, fontWeight: '500' }}>
                     {item.subject?.name} ({item.subject?.code})
                 </Text>
             </View>
 
             {/* Divider */}
-            <View style={{ height: 1, backgroundColor: colors.border, marginBottom: 12, borderStyle: 'dashed', borderWidth: 1, borderColor: colors.border }} />
+            <View style={{ height: 1, backgroundColor: colors.border, marginBottom: verticalScale(12), borderStyle: 'dashed', borderWidth: 1, borderColor: colors.border }} />
 
             {/* To Faculty */}
             <View>
-                 <Text style={{ fontSize: 11, color: colors.textSecondary, marginBottom: 6, fontWeight: '600' }}>SUBSTITUTE FACULTY</Text>
+                 <Text style={{ fontSize: normalizeFont(11), color: colors.textSecondary, marginBottom: verticalScale(6), fontWeight: '600' }}>SUBSTITUTE FACULTY</Text>
                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                     <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                     <View style={{ width: scale(32), height: scale(32), borderRadius: moderateScale(16), backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: scale(10) }}>
                          <Text style={{ color: '#FFF', fontWeight: '700' }}>
                              {item.substitute_faculty?.full_name?.charAt(0) || '?'}
                          </Text>
                      </View>
-                     <Text style={{ fontSize: 14, color: colors.textPrimary, fontWeight: '600' }}>
+                     <Text style={{ fontSize: normalizeFont(14), color: colors.textPrimary, fontWeight: '600' }}>
                          {item.substitute_faculty?.full_name || 'Unknown Faculty'}
                      </Text>
                  </View>
                  {item.notes && (
-                     <View style={{ marginTop: 8, padding: 8, backgroundColor: colors.background, borderRadius: 6 }}>
-                         <Text style={{ fontSize: 11, color: colors.textSecondary, fontStyle: 'italic' }}>
+                     <View style={{ marginTop: verticalScale(8), padding: scale(8), backgroundColor: colors.background, borderRadius: moderateScale(6) }}>
+                         <Text style={{ fontSize: normalizeFont(11), color: colors.textSecondary, fontStyle: 'italic' }}>
                              "{item.notes}"
                          </Text>
                      </View>
@@ -274,81 +275,81 @@ export const SwapHistoryScreen: React.FC = () => {
   );
 
   const renderSwapItem = ({ item }: { item: any }) => (
-    <View style={[styles.requestCard, { backgroundColor: colors.surface, borderColor: colors.border, marginHorizontal: 16, marginBottom: 12, padding: 0, overflow: 'hidden' }]}>
+    <View style={[styles.requestCard, { backgroundColor: colors.surface, borderColor: colors.border, marginHorizontal: scale(16), marginBottom: verticalScale(12), padding: 0, overflow: 'hidden' }]}>
         {/* Header */}
-        <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.tealLight + '20' }}>
+        <View style={{ padding: scale(12), borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.tealLight + '20' }}>
             <View>
-                <Text style={{ fontSize: 12, color: colors.tealLight, fontWeight: '700' }}>SWAP REQUEST</Text>
-                <Text style={{ fontSize: 10, color: colors.textSecondary }}>{format(new Date(item.date), 'MMMM d, yyyy')}</Text>
+                <Text style={{ fontSize: normalizeFont(12), color: colors.tealLight, fontWeight: '700' }}>SWAP REQUEST</Text>
+                <Text style={{ fontSize: normalizeFont(10), color: colors.textSecondary }}>{format(new Date(item.date), 'MMMM d, yyyy')}</Text>
             </View>
             {renderStatusBadge(item.status)}
         </View>
 
-        <View style={{ padding: 12 }}>
+        <View style={{ padding: scale(12) }}>
             {/* My Class */}
             <View style={{ flexDirection: 'row' }}>
-                <View style={{ width: 24, alignItems: 'center', marginRight: 8 }}>
+                <View style={{ width: scale(24), alignItems: 'center', marginRight: scale(8) }}>
                     <View style={{ width: 2, height: '100%', backgroundColor: colors.border, position: 'absolute' }} />
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent, marginTop: 4 }} />
+                    <View style={{ width: scale(10), height: scale(10), borderRadius: moderateScale(5), backgroundColor: colors.accent, marginTop: verticalScale(4) }} />
                 </View>
-                <View style={{ flex: 1, paddingBottom: 16 }}>
-                    <Text style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '700', marginBottom: 4 }}>MY CLASS (YOU)</Text>
+                <View style={{ flex: 1, paddingBottom: verticalScale(16) }}>
+                    <Text style={{ fontSize: normalizeFont(11), color: colors.textSecondary, fontWeight: '700', marginBottom: verticalScale(4) }}>MY CLASS (YOU)</Text>
                     {item.my_class ? (
                         <>
-                             <View style={{ flexDirection: 'row', gap: 6, marginBottom: 2 }}>
-                                 <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>
+                             <View style={{ flexDirection: 'row', gap: scale(6), marginBottom: verticalScale(2) }}>
+                                 <Text style={{ fontSize: normalizeFont(13), fontWeight: '700', color: colors.textPrimary }}>
                                      {item.my_class.target_dept}-{item.my_class.target_year}-{item.my_class.target_section}
                                  </Text>
-                                 <Text style={{ fontSize: 13, color: colors.textSecondary }}>•</Text>
-                                 <Text style={{ fontSize: 13, color: colors.textPrimary }}>{item.slot_a_id}</Text>
+                                 <Text style={{ fontSize: normalizeFont(13), color: colors.textSecondary }}>•</Text>
+                                 <Text style={{ fontSize: normalizeFont(13), color: colors.textPrimary }}>{item.slot_a_id}</Text>
                              </View>
-                             <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                             <Text style={{ fontSize: normalizeFont(12), color: colors.textSecondary }}>
                                  {item.my_class.start_time?.slice(0,5)} - {item.my_class.end_time?.slice(0,5)}
                              </Text>
-                             <Text style={{ fontSize: 12, color: colors.textPrimary, marginTop: 2 }}>
+                             <Text style={{ fontSize: normalizeFont(12), color: colors.textPrimary, marginTop: verticalScale(2) }}>
                                  {item.my_class.subjects?.name} ({item.my_class.subjects?.code})
                              </Text>
                         </>
                     ) : (
-                        <Text style={{ color: colors.danger, fontSize: 12 }}>Info Unavailable ({item.slot_a_id})</Text>
+                        <Text style={{ color: colors.danger, fontSize: normalizeFont(12) }}>Info Unavailable ({item.slot_a_id})</Text>
                     )}
                 </View>
             </View>
 
             {/* Other Class */}
             <View style={{ flexDirection: 'row' }}>
-                <View style={{ width: 24, alignItems: 'center', marginRight: 8 }}>
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.warning, marginTop: 4 }} />
+                <View style={{ width: scale(24), alignItems: 'center', marginRight: scale(8) }}>
+                    <View style={{ width: scale(10), height: scale(10), borderRadius: moderateScale(5), backgroundColor: colors.warning, marginTop: verticalScale(4) }} />
                 </View>
                 <View style={{ flex: 1 }}>
-                     <Text style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '700', marginBottom: 4 }}>
+                     <Text style={{ fontSize: normalizeFont(11), color: colors.textSecondary, fontWeight: '700', marginBottom: verticalScale(4) }}>
                          SWAPPING WITH: {item.faculty_b?.full_name?.toUpperCase()}
                      </Text>
                      {item.their_class ? (
                         <>
-                             <View style={{ flexDirection: 'row', gap: 6, marginBottom: 2 }}>
-                                 <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>
+                             <View style={{ flexDirection: 'row', gap: scale(6), marginBottom: verticalScale(2) }}>
+                                 <Text style={{ fontSize: normalizeFont(13), fontWeight: '700', color: colors.textPrimary }}>
                                      {item.their_class.target_dept}-{item.their_class.target_year}-{item.their_class.target_section}
                                  </Text>
-                                 <Text style={{ fontSize: 13, color: colors.textSecondary }}>•</Text>
-                                 <Text style={{ fontSize: 13, color: colors.textPrimary }}>{item.slot_b_id}</Text>
+                                 <Text style={{ fontSize: normalizeFont(13), color: colors.textSecondary }}>•</Text>
+                                 <Text style={{ fontSize: normalizeFont(13), color: colors.textPrimary }}>{item.slot_b_id}</Text>
                              </View>
-                             <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                             <Text style={{ fontSize: normalizeFont(12), color: colors.textSecondary }}>
                                  {item.their_class.start_time?.slice(0,5)} - {item.their_class.end_time?.slice(0,5)}
                              </Text>
-                             <Text style={{ fontSize: 12, color: colors.textPrimary, marginTop: 2 }}>
+                             <Text style={{ fontSize: normalizeFont(12), color: colors.textPrimary, marginTop: verticalScale(2) }}>
                                  {item.their_class.subjects?.name} ({item.their_class.subjects?.code})
                              </Text>
                         </>
                     ) : (
-                        <Text style={{ color: colors.danger, fontSize: 12 }}>Info Unavailable ({item.slot_b_id})</Text>
+                        <Text style={{ color: colors.danger, fontSize: normalizeFont(12) }}>Info Unavailable ({item.slot_b_id})</Text>
                     )}
                 </View>
             </View>
 
              {item.notes && (
-                 <View style={{ marginTop: 12, padding: 8, backgroundColor: colors.background, borderRadius: 6, marginLeft: 32 }}>
-                     <Text style={{ fontSize: 11, color: colors.textSecondary, fontStyle: 'italic' }}>
+                 <View style={{ marginTop: verticalScale(12), padding: scale(8), backgroundColor: colors.background, borderRadius: moderateScale(6), marginLeft: scale(32) }}>
+                     <Text style={{ fontSize: normalizeFont(11), color: colors.textSecondary, fontStyle: 'italic' }}>
                          "{item.notes}"
                      </Text>
                  </View>
@@ -388,7 +389,7 @@ export const SwapHistoryScreen: React.FC = () => {
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={{ flex: 1, marginLeft: scale(12) }}>
             <Text style={styles.pageTitle}>History</Text>
             <Text style={styles.subtitle}>Your sent requests</Text>
           </View>
@@ -427,7 +428,7 @@ export const SwapHistoryScreen: React.FC = () => {
           renderSectionHeader={renderSectionHeader}
           ListEmptyComponent={renderEmpty}
           stickySectionHeadersEnabled={false}
-          contentContainerStyle={{ paddingVertical: 8, flexGrow: 1 }}
+          contentContainerStyle={{ paddingVertical: verticalScale(8), flexGrow: 1 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.teal} />
           }
@@ -440,12 +441,12 @@ export const SwapHistoryScreen: React.FC = () => {
 
 const localStyles = StyleSheet.create({
   sectionHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: 8,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
+    marginTop: verticalScale(8),
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,

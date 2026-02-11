@@ -593,12 +593,12 @@ export async function syncPendingSubmissions(): Promise<{ synced: number; failed
             faculty_id: user.id,
             slot_id: submission.classData.slotId || 0, // Fallback to 0 if missing (manual/extra class)
             date: submission.submittedAt.split('T')[0],
-            date: submission.submittedAt.split('T')[0],
             subject_id: subjectId,
             target_dept: submission.classData.dept,
             target_year: submission.classData.year,
             target_section: submission.classData.sectionLetter,
             start_time: submission.submittedAt,
+            total_students: submission.attendance.length, // FIX: specific fix for offline sync error
             // is_offline_sync: true, // Column missing in DB schema
           })
           .select()

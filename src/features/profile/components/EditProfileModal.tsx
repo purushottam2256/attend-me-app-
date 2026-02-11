@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../../config/supabase';
 import { ZenToast } from '../../../components/ZenToast';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface EditProfileModalProps {
     visible: boolean;
@@ -165,13 +166,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             onPress={handlePickImage} 
                             style={[styles.uploadBtn, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}
                         >
-                            <Ionicons name="cloud-upload" size={18} color={isDark ? '#FFF' : '#334155'} />
-                            <Text style={{ color: isDark ? '#FFF' : '#334155', fontWeight: '600', marginLeft: 8 }}>Upload Photo</Text>
+                            <Ionicons name="cloud-upload" size={normalizeFont(18)} color={isDark ? '#FFF' : '#334155'} />
+                            <Text style={{ color: isDark ? '#FFF' : '#334155', fontWeight: '600', marginLeft: scale(8) }}>Upload Photo</Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Inputs */}
-                    <View style={{ width: '100%', marginBottom: 20 }}>
+                    <View style={{ width: '100%', marginBottom: verticalScale(20) }}>
                         <Text style={[styles.label, { color: isDark ? '#94A3B8' : '#64748B' }]}>FULL NAME</Text>
                         <TextInput
                             style={[styles.input, { 
@@ -199,8 +200,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             {isLoading ? (
                                 <ActivityIndicator color="#FFF" size="small" />
                             ) : (
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                    <Ionicons name="checkmark" size={18} color="#FFF" />
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(6) }}>
+                                    <Ionicons name="checkmark" size={normalizeFont(18)} color="#FFF" />
                                     <Text style={{ color: '#FFF', fontWeight: '700' }}>OK</Text>
                                 </View>
                             )}
@@ -223,73 +224,73 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
-        padding: 24,
+        padding: scale(24),
     },
     modalCard: {
-        borderRadius: 24,
-        padding: 24,
+        borderRadius: moderateScale(24),
+        padding: scale(24),
         alignItems: 'center',
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
+        shadowOffset: { width: 0, height: verticalScale(10) },
         shadowOpacity: 0.1,
-        shadowRadius: 20,
+        shadowRadius: moderateScale(20),
         elevation: 10,
     },
     // ... other styles unchanged ...
     modalTitle: {
-        fontSize: 20,
+        fontSize: normalizeFont(20),
         fontWeight: 'bold',
-        marginBottom: 24,
+        marginBottom: verticalScale(24),
         alignSelf: 'flex-start'
     },
     photoSection: {
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: verticalScale(24),
         width: '100%'
     },
     avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: scale(100),
+        height: scale(100),
+        borderRadius: scale(50),
         borderWidth: 4,
-        marginBottom: 16
+        marginBottom: verticalScale(16)
     },
     uploadBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 12,
+        paddingVertical: verticalScale(10),
+        paddingHorizontal: scale(16),
+        borderRadius: moderateScale(12),
     },
     label: {
-        fontSize: 12,
+        fontSize: normalizeFont(12),
         fontWeight: '700',
-        marginBottom: 8,
+        marginBottom: verticalScale(8),
         letterSpacing: 0.5
     },
     input: {
         width: '100%',
-        padding: 14,
-        borderRadius: 12,
+        padding: scale(14),
+        borderRadius: moderateScale(12),
         borderWidth: 1,
-        fontSize: 16
+        fontSize: normalizeFont(16)
     },
     actionRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         width: '100%',
-        gap: 12
+        gap: scale(12)
     },
     cancelBtn: {
-        paddingVertical: 12,
-        paddingHorizontal: 16,
+        paddingVertical: verticalScale(12),
+        paddingHorizontal: scale(16),
     },
     saveBtn: {
         backgroundColor: '#0F766E', // Keep teal for action
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 12,
-        minWidth: 80,
+        paddingVertical: verticalScale(12),
+        paddingHorizontal: scale(24),
+        borderRadius: moderateScale(12),
+        minWidth: scale(80),
         alignItems: 'center',
         justifyContent: 'center'
     }

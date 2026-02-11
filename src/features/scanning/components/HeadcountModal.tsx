@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface HeadcountModalProps {
   visible: boolean;
@@ -71,7 +72,7 @@ export const HeadcountModal: React.FC<HeadcountModalProps> = ({
               <View style={styles.statsContainer}>
                 <View style={styles.statBox}>
                   <View style={[styles.statIcon, { backgroundColor: colors.successBg }]}>
-                    <Ionicons name="checkmark-circle" size={28} color={colors.success} />
+                    <Ionicons name="checkmark-circle" size={normalizeFont(28)} color={colors.success} />
                   </View>
                   <Text style={[styles.statValue, { color: colors.success }]}>{detectedCount}</Text>
                   <Text style={[styles.statLabel, { color: colors.labelText }]}>Present</Text>
@@ -81,7 +82,7 @@ export const HeadcountModal: React.FC<HeadcountModalProps> = ({
 
                 <View style={styles.statBox}>
                   <View style={[styles.statIcon, { backgroundColor: colors.dangerBg }]}>
-                    <Ionicons name="close-circle" size={28} color={colors.danger} />
+                    <Ionicons name="close-circle" size={normalizeFont(28)} color={colors.danger} />
                   </View>
                   <Text style={[styles.statValue, { color: colors.danger }]}>{absentCount}</Text>
                   <Text style={[styles.statLabel, { color: colors.labelText }]}>Absent</Text>
@@ -90,7 +91,7 @@ export const HeadcountModal: React.FC<HeadcountModalProps> = ({
 
               {/* Warning */}
               <View style={[styles.warningBox, { backgroundColor: colors.warningBg }]}>
-                <Ionicons name="information-circle" size={20} color="#F59E0B" />
+                <Ionicons name="information-circle" size={normalizeFont(20)} color="#F59E0B" />
                 <Text style={[styles.warningText, { color: colors.warningText }]}>
                   Please verify the headcount before submitting. If you find any anomaly, report to HOD.
                 </Text>
@@ -109,7 +110,7 @@ export const HeadcountModal: React.FC<HeadcountModalProps> = ({
                   style={[styles.rescanButton, { backgroundColor: colors.rescanBg }]} 
                   onPress={onRescan}
                 >
-                  <Ionicons name="refresh" size={18} color={colors.rescanText} />
+                  <Ionicons name="refresh" size={normalizeFont(18)} color={colors.rescanText} />
                   <Text style={[styles.rescanButtonText, { color: colors.rescanText }]}>Rescan</Text>
                 </TouchableOpacity>
               </View>
@@ -119,7 +120,7 @@ export const HeadcountModal: React.FC<HeadcountModalProps> = ({
                 onPress={onSubmit}
               >
                 <Text style={styles.submitButtonText}>Submit Attendance</Text>
-                <Ionicons name="arrow-forward" size={20} color={isDark ? '#000000' : '#FFFFFF'} />
+                <Ionicons name="arrow-forward" size={normalizeFont(20)} color={isDark ? '#000000' : '#FFFFFF'} />
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
@@ -134,90 +135,90 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
   },
   modalContainer: {
     width: '100%',
-    maxWidth: 360,
-    borderRadius: 24,
-    padding: 24,
+    maxWidth: scale(360),
+    borderRadius: moderateScale(24),
+    padding: scale(24),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
+    shadowOffset: { width: 0, height: verticalScale(16) },
     shadowOpacity: 0.35,
-    shadowRadius: 32,
+    shadowRadius: moderateScale(32),
     elevation: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 20,
+    gap: scale(10),
+    marginBottom: verticalScale(20),
   },
   emoji: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
   },
   title: {
-    fontSize: 22,
+    fontSize: normalizeFont(22),
     fontWeight: '700',
     letterSpacing: -0.3,
   },
   statsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
   statBox: {
     flex: 1,
     alignItems: 'center',
   },
   statIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: scale(56),
+    height: scale(56),
+    borderRadius: moderateScale(16),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   statValue: {
-    fontSize: 32,
+    fontSize: normalizeFont(32),
     fontWeight: '800',
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '500',
   },
   divider: {
     width: 1,
-    height: 80,
-    marginHorizontal: 16,
+    height: verticalScale(80),
+    marginHorizontal: scale(16),
   },
   warningBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 20,
+    gap: scale(10),
+    padding: scale(14),
+    borderRadius: moderateScale(12),
+    marginBottom: verticalScale(20),
   },
   warningText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: verticalScale(18),
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
+    gap: scale(12),
+    marginBottom: verticalScale(12),
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: verticalScale(14),
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: moderateScale(14),
   },
   cancelButtonText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '600',
   },
   rescanButton: {
@@ -225,24 +226,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 14,
-    borderRadius: 14,
+    gap: scale(6),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(14),
   },
   rescanButtonText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '600',
   },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 14,
+    gap: scale(8),
+    paddingVertical: verticalScale(16),
+    borderRadius: moderateScale(14),
   },
   submitButtonText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '700',
     color: '#FFFFFF',
   },

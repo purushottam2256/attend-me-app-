@@ -21,6 +21,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -137,7 +138,7 @@ export const OffHoursScanModal: React.FC<OffHoursScanModalProps> = ({
 
           {/* Icon & Title */}
           <View style={[styles.iconContainer, { backgroundColor: `${config.color}20` }]}>
-            <Ionicons name={config.icon} size={40} color={config.color} />
+            <Ionicons name={config.icon} size={normalizeFont(40)} color={config.color} />
           </View>
           
           <Text style={[styles.title, { color: textPrimary }]}>{config.title}</Text>
@@ -210,113 +211,115 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   container: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 24,
+    borderTopLeftRadius: moderateScale(28),
+    borderTopRightRadius: moderateScale(28),
+    paddingHorizontal: scale(24),
     maxHeight: SCREEN_HEIGHT * 0.8,
   },
   handleContainer: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: verticalScale(12),
   },
   handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
+    width: scale(40),
+    height: verticalScale(4),
+    borderRadius: moderateScale(2),
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: scale(80),
+    height: scale(80),
+    borderRadius: moderateScale(40),
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   title: {
-    fontSize: 24,
+    fontSize: normalizeFont(24),
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
+    marginBottom: verticalScale(24),
+    lineHeight: verticalScale(22),
   },
   nextClassCard: {
-    padding: 16,
-    borderRadius: 16,
+    padding: scale(16),
+    borderRadius: moderateScale(16),
     borderWidth: 1,
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   nextClassHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
+    gap: scale(6),
+    marginBottom: verticalScale(8),
   },
   nextClassLabel: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   nextClassName: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   nextClassTime: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '600',
   },
   previousSection: {
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   sectionSubtitle: {
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: normalizeFont(14),
+    marginBottom: verticalScale(12),
   },
   classList: {
-    maxHeight: 200,
+    flexGrow: 0, 
+    minHeight: verticalScale(100),
+    maxHeight: verticalScale(300), // Increased max height for larger screens
   },
   classListContent: {
-    gap: 10,
+    gap: verticalScale(10),
   },
   classCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
+    padding: scale(14),
+    borderRadius: moderateScale(14),
     borderWidth: 1,
   },
   classInfo: {
     flex: 1,
   },
   className: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   classDetails: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
   },
   closeButton: {
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: verticalScale(16),
+    borderRadius: moderateScale(14),
     borderWidth: 1,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: verticalScale(8),
   },
   closeButtonText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
   },
 });

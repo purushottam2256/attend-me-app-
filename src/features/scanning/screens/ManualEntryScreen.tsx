@@ -27,6 +27,7 @@ import { useAttendance } from '../hooks/useAttendance';
 import { checkExistingSession } from '../../../services/dashboardService';
 import { supabase } from '../../../config/supabase';
 import { ZenToast } from '../../../components/ZenToast';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 // Types
 type BatchFilter = 'all' | 1 | 2;
@@ -59,7 +60,7 @@ const StatsBar = ({ counts, onBulkAction }: {
                 style={[styles.bulkButton, { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)' }]}
                 onPress={() => onBulkAction('present_all')}
             >
-                <Ionicons name="checkmark-done-circle" size={16} color="#10B981" />
+                <Ionicons name="checkmark-done-circle" size={normalizeFont(16)} color="#10B981" />
                 <Text style={[styles.bulkText, { color: '#10B981' }]}>Mark All Present</Text>
             </TouchableOpacity>
             
@@ -67,7 +68,7 @@ const StatsBar = ({ counts, onBulkAction }: {
                 style={[styles.bulkButton, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)' }]}
                 onPress={() => onBulkAction('absent_all')}
             >
-                <Ionicons name="close-circle" size={16} color="#EF4444" />
+                <Ionicons name="close-circle" size={normalizeFont(16)} color="#EF4444" />
                 <Text style={[styles.bulkText, { color: '#EF4444' }]}>Mark All Absent</Text>
             </TouchableOpacity>
         </View>
@@ -200,7 +201,7 @@ export const ManualEntryScreen: React.FC = () => {
       return (
           <View style={[styles.center, { backgroundColor: '#0D4A4A', flex: 1, alignItems:'center', justifyContent:'center' }]}>
               <ActivityIndicator size="large" color={colors.accent} />
-              <Text style={{ color: colors.text, marginTop: 10 }}>Loading Class Roster...</Text>
+              <Text style={{ color: colors.text, marginTop: verticalScale(10) }}>Loading Class Roster...</Text>
           </View>
       );
   }
@@ -219,7 +220,7 @@ export const ManualEntryScreen: React.FC = () => {
             }} 
             style={styles.iconButton}
         >
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
+            <Ionicons name="arrow-back" size={normalizeFont(24)} color="#FFF" />
         </TouchableOpacity>
         
         <View style={styles.headerTitleContainer}>
@@ -229,26 +230,26 @@ export const ManualEntryScreen: React.FC = () => {
             </Text>
             {isOfflineMode && (
                 <View style={{ 
-                    marginTop: 4,
-                    paddingHorizontal: 8, 
-                    paddingVertical: 2, 
+                    marginTop: verticalScale(4),
+                    paddingHorizontal: scale(8), 
+                    paddingVertical: verticalScale(2), 
                     backgroundColor: 'rgba(245, 158, 11, 0.2)', 
-                    borderRadius: 4,
+                    borderRadius: moderateScale(4),
                     borderWidth: 1,
                     borderColor: '#F59E0B',
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 4
+                    gap: scale(4)
                 }}>
-                    <Ionicons name="cloud-offline" size={10} color="#F59E0B" />
-                    <Text style={{ color: '#F59E0B', fontSize: 10, fontWeight: '700' }}>OFFLINE MODE</Text>
+                    <Ionicons name="cloud-offline" size={normalizeFont(10)} color="#F59E0B" />
+                    <Text style={{ color: '#F59E0B', fontSize: normalizeFont(10), fontWeight: '700' }}>OFFLINE MODE</Text>
                 </View>
             )}
         </View>
 
         {/* Filter Button (Replacing Save) */}
         <TouchableOpacity onPress={cycleFilter} style={styles.filterButton}>
-            <Ionicons name="filter" size={16} color="#FFF" />
+            <Ionicons name="filter" size={normalizeFont(16)} color="#FFF" />
             <Text style={styles.filterText}>
                 {batchFilter === 'all' ? 'All' : `B${batchFilter}`}
             </Text>
@@ -269,7 +270,7 @@ export const ManualEntryScreen: React.FC = () => {
 
       {/* Floating Save Button */}
       {hasChanges && (
-          <View style={[styles.fabContainer, { paddingBottom: insets.bottom + 20 }]}>
+          <View style={[styles.fabContainer, { paddingBottom: insets.bottom + verticalScale(20) }]}>
             <TouchableOpacity 
                 style={styles.fab} 
                 onPress={handleSubmit}
@@ -279,7 +280,7 @@ export const ManualEntryScreen: React.FC = () => {
                     <ActivityIndicator color="#0D4A4A" />
                 ) : (
                     <>
-                        <Ionicons name="save" size={20} color="#0D4A4A" />
+                        <Ionicons name="save" size={normalizeFont(20)} color="#0D4A4A" />
                         <Text style={styles.fabText}>Submit ({filteredStudents.filter(s => s.status === 'absent').length} Absent)</Text>
                     </>
                 )}
@@ -298,7 +299,7 @@ export const ManualEntryScreen: React.FC = () => {
             {selectedStudent && (
                 <View style={styles.modalCard}>
                     <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedStudent(null)}>
-                        <Ionicons name="close" size={24} color="#FFF" />
+                        <Ionicons name="close" size={normalizeFont(24)} color="#FFF" />
                     </TouchableOpacity>
                     
                     <View style={styles.modalAvatarPlaceholder}>
@@ -333,16 +334,16 @@ export const ManualEntryScreen: React.FC = () => {
       >
           <BlurView intensity={90} tint="dark" style={styles.modalOverlay}>
             <View style={styles.modalCard}>
-                <View style={[styles.modalAvatarPlaceholder, { backgroundColor: 'rgba(239, 68, 68, 0.15)', marginBottom: 24 }]}>
-                    <Ionicons name="alert-circle" size={32} color="#EF4444" />
+                <View style={[styles.modalAvatarPlaceholder, { backgroundColor: 'rgba(239, 68, 68, 0.15)', marginBottom: verticalScale(24) }]}>
+                    <Ionicons name="alert-circle" size={normalizeFont(32)} color="#EF4444" />
                 </View>
                 
                 <Text style={styles.modalName}>Unsaved Changes</Text>
-                <Text style={[styles.modalRoll, { textAlign: 'center', marginBottom: 24 }]}>
+                <Text style={[styles.modalRoll, { textAlign: 'center', marginBottom: verticalScale(24) }]}>
                     You have unsaved attendance marks. Are you sure you want to discard them?
                 </Text>
                 
-                <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+                <View style={{ flexDirection: 'row', gap: scale(12), width: '100%' }}>
                     <TouchableOpacity 
                         style={[styles.bulkButton, { backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }]}
                         onPress={() => setShowUnsavedModal(false)}
@@ -385,28 +386,28 @@ const styles = StyleSheet.create({
   header: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingBottom: 16,
+      paddingHorizontal: scale(16),
+      paddingBottom: verticalScale(16),
       backgroundColor: 'rgba(0,0,0,0.2)',
   },
-  iconButton: { padding: 8 },
+  iconButton: { padding: scale(8) },
   headerTitleContainer: { flex: 1, alignItems: 'center' },
-  headerTitle: { color: '#FFF', fontSize: 18, fontWeight: '700' },
-  headerSubtitle: { color: 'rgba(255,255,255,0.7)', fontSize: 12 },
+  headerTitle: { color: '#FFF', fontSize: normalizeFont(18), fontWeight: '700' },
+  headerSubtitle: { color: 'rgba(255,255,255,0.7)', fontSize: normalizeFont(12) },
   filterButton: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: 'rgba(255,255,255,0.15)',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-      gap: 6
+      paddingHorizontal: scale(12),
+      paddingVertical: verticalScale(6),
+      borderRadius: moderateScale(20),
+      gap: scale(6)
   },
-  filterText: { color: '#FFF', fontWeight: '600', fontSize: 14 },
+  filterText: { color: '#FFF', fontWeight: '600', fontSize: normalizeFont(14) },
   
   // Stats
   statsContainer: {
-      padding: 16,
+      padding: scale(16),
       backgroundColor: 'rgba(0,0,0,0.1)',
       borderBottomWidth: 1,
       borderBottomColor: 'rgba(255,255,255,0.05)'
@@ -414,28 +415,28 @@ const styles = StyleSheet.create({
   statsRow: {
       flexDirection: 'row',
       justifyContent: 'space-around',
-      marginBottom: 12,
+      marginBottom: verticalScale(12),
   },
-  statItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statDot: { width: 8, height: 8, borderRadius: 4 },
-  statText: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
+  statItem: { flexDirection: 'row', alignItems: 'center', gap: scale(6) },
+  statDot: { width: scale(8), height: scale(8), borderRadius: moderateScale(4) },
+  statText: { color: 'rgba(255,255,255,0.8)', fontSize: normalizeFont(13) },
   statBold: { color: '#FFF', fontWeight: '700' },
   
   bulkActionsRow: {
       flexDirection: 'row',
-      gap: 12,
+      gap: scale(12),
   },
   bulkButton: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 8,
-      borderRadius: 8,
+      paddingVertical: verticalScale(8),
+      borderRadius: moderateScale(8),
       borderWidth: 1,
-      gap: 8
+      gap: scale(8)
   },
-  bulkText: { fontWeight: '600', fontSize: 13 },
+  bulkText: { fontWeight: '600', fontSize: normalizeFont(13) },
 
   // FAB
   fabContainer: {
@@ -450,45 +451,45 @@ const styles = StyleSheet.create({
       backgroundColor: '#3DDC97',
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 24,
-      paddingVertical: 14,
-      borderRadius: 30,
-      gap: 8,
+      paddingHorizontal: scale(24),
+      paddingVertical: verticalScale(14),
+      borderRadius: moderateScale(30),
+      gap: scale(8),
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
+      shadowOffset: { width: 0, height: verticalScale(4) },
       shadowOpacity: 0.3,
-      shadowRadius: 8,
+      shadowRadius: moderateScale(8),
       elevation: 6
   },
-  fabText: { color: '#0D4A4A', fontWeight: 'bold', fontSize: 16 },
+  fabText: { color: '#0D4A4A', fontWeight: 'bold', fontSize: normalizeFont(16) },
 
   // Modal
-  modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: scale(20) },
   modalCard: {
       width: '85%',
       backgroundColor: 'rgba(30,30,30,0.9)',
-      borderRadius: 24,
-      padding: 24,
+      borderRadius: moderateScale(24),
+      padding: scale(24),
       alignItems: 'center',
       borderWidth: 1,
       borderColor: 'rgba(255,255,255,0.1)'
   },
-  modalClose: { position: 'absolute', top: 16, right: 16 },
+  modalClose: { position: 'absolute', top: verticalScale(16), right: scale(16) },
   modalAvatarPlaceholder: {
-      width: 64, height: 64, borderRadius: 32,
+      width: scale(64), height: scale(64), borderRadius: moderateScale(32),
       backgroundColor: 'rgba(255,255,255,0.1)',
       justifyContent: 'center', alignItems: 'center',
-      marginBottom: 16
+      marginBottom: verticalScale(16)
   },
-  modalAvatarText: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
-  modalName: { color: '#FFF', fontSize: 20, fontWeight: 'bold', marginBottom: 4, textAlign: 'center' },
-  modalRoll: { color: 'rgba(255,255,255,0.6)', fontSize: 16, marginBottom: 16 },
+  modalAvatarText: { color: '#FFF', fontSize: normalizeFont(24), fontWeight: 'bold' },
+  modalName: { color: '#FFF', fontSize: normalizeFont(20), fontWeight: 'bold', marginBottom: verticalScale(4), textAlign: 'center' },
+  modalRoll: { color: 'rgba(255,255,255,0.6)', fontSize: normalizeFont(16), marginBottom: verticalScale(16) },
   modalStatusBadge: {
-      paddingHorizontal: 16,
-      paddingVertical: 6,
-      borderRadius: 20,
-      marginBottom: 20
+      paddingHorizontal: scale(16),
+      paddingVertical: verticalScale(6),
+      borderRadius: moderateScale(20),
+      marginBottom: verticalScale(20)
   },
   modalStatusText: { color: '#FFF', fontWeight: 'bold' },
-  modalInfo: { color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 4 },
+  modalInfo: { color: 'rgba(255,255,255,0.5)', fontSize: normalizeFont(14), marginBottom: verticalScale(4) },
 });

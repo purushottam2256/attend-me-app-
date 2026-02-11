@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface TrendData {
   day: string;
@@ -42,13 +43,7 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({ data }) => {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <View style={styles.titleRow}>
-          <Ionicons name="trending-up-outline" size={18} color={isDark ? '#3DDC97' : '#0D4A4A'} />
-          <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#0F172A' }]}>
-            Weekly Trends
-          </Text>
-        </View>
-        <Text style={[styles.insightText, { color: isDark ? 'rgba(255,255,255,0.6)' : '#64748B' }]}>
+        <Text style={[styles.insightText, { color: isDark ? 'rgba(255,255,255,0.6)' : '#64748B', marginLeft: 'auto' }]}>
           {getInsight()}
         </Text>
       </View>
@@ -60,7 +55,7 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({ data }) => {
       }]}>
         {data.length === 0 ? (
           <View style={styles.noDataContainer}>
-            <Ionicons name="bar-chart-outline" size={32} color={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'} />
+            <Ionicons name="bar-chart-outline" size={normalizeFont(32)} color={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'} />
             <Text style={[styles.noDataText, { color: isDark ? 'rgba(255,255,255,0.4)' : '#94A3B8' }]}>
               No attendance data this week
             </Text>
@@ -100,75 +95,75 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({ data }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginTop: 20,
+    marginHorizontal: scale(16),
+    marginTop: verticalScale(20),
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: scale(8),
   },
   title: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '700',
   },
   insightText: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '500',
     fontStyle: 'italic',
   },
   graphContainer: {
-    borderRadius: 16,
+    borderRadius: moderateScale(16),
     borderWidth: 1,
-    padding: 16,
-    minHeight: 140,
+    padding: scale(16),
+    minHeight: verticalScale(140),
   },
   noDataContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: verticalScale(20),
   },
   noDataText: {
-    marginTop: 8,
-    fontSize: 13,
+    marginTop: verticalScale(8),
+    fontSize: normalizeFont(13),
   },
   barsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    height: 100,
+    height: verticalScale(100),
   },
   barWrapper: {
     alignItems: 'center',
     flex: 1,
   },
   barContainer: {
-    height: 80,
+    height: verticalScale(80),
     justifyContent: 'flex-end',
   },
   bar: {
-    width: 24,
-    borderRadius: 6,
-    minHeight: 8,
-    shadowOffset: { width: 0, height: 2 },
+    width: scale(24),
+    borderRadius: moderateScale(6),
+    minHeight: verticalScale(8),
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: moderateScale(4),
     elevation: 3,
   },
   dayLabel: {
-    fontSize: 10,
+    fontSize: normalizeFont(10),
     fontWeight: '600',
-    marginTop: 6,
+    marginTop: verticalScale(6),
   },
   percentLabel: {
-    fontSize: 9,
+    fontSize: normalizeFont(9),
     fontWeight: '500',
   },
 });

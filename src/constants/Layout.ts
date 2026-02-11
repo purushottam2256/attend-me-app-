@@ -2,65 +2,67 @@
  * Layout & Spacing Constants
  */
 
+import { scale, verticalScale, moderateScale } from '../utils/responsive';
+
 export const Layout = {
     // Screen padding
-    screenPadding: 16,
-    screenPaddingLarge: 24,
+    screenPadding: scale(16),
+    screenPaddingLarge: scale(24),
 
     // Border radius
     radius: {
-        xs: 4,
-        sm: 8,
-        md: 12,
-        lg: 16,
-        xl: 24,
+        xs: moderateScale(4),
+        sm: moderateScale(8),
+        md: moderateScale(12),
+        lg: moderateScale(16),
+        xl: moderateScale(24),
         full: 9999,
     },
 
     // Spacing scale (4px base)
     spacing: {
-        xs: 4,
-        sm: 8,
-        md: 12,
-        lg: 16,
-        xl: 24,
-        '2xl': 32,
-        '3xl': 48,
-        '4xl': 64,
+        xs: scale(4),
+        sm: scale(8),
+        md: scale(12),
+        lg: scale(16),
+        xl: scale(24),
+        '2xl': scale(32),
+        '3xl': scale(48),
+        '4xl': scale(64),
     },
 
     // Component sizes
     button: {
-        height: 48,
-        paddingHorizontal: 24,
+        height: verticalScale(48),
+        paddingHorizontal: scale(24),
     },
 
     input: {
-        height: 52,
-        paddingHorizontal: 16,
+        height: verticalScale(52),
+        paddingHorizontal: scale(16),
     },
 
     card: {
-        padding: 16,
+        padding: scale(16),
         shadow: {
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
+            shadowOffset: { width: 0, height: verticalScale(2) },
             shadowOpacity: 0.08,
-            shadowRadius: 8,
+            shadowRadius: moderateScale(8),
             elevation: 3,
         },
     },
 
     // Dock navigation
     dock: {
-        height: 72,
-        iconSize: 24,
+        height: verticalScale(72),
+        iconSize: moderateScale(24),
         activeScale: 1.15,
     },
 
     // Header
     header: {
-        height: 56,
+        height: verticalScale(56),
     },
 };
 

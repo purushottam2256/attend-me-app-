@@ -26,7 +26,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../../contexts';
 import { supabase } from '../../../config/supabase';
 import { getAttendanceHistory, AttendanceSession } from '../../../services/dashboardService';
@@ -37,6 +37,7 @@ import { cacheHistory, getCachedHistory, getCacheAge,  getPendingSubmissions,
 import { useConnectionStatus } from '../../../hooks';
 import { EditAttendanceModal, FilterBar } from '../components';
 import { historyStyles as styles, DATE_TILE_WIDTH } from '../styles';
+import { scale, verticalScale, normalizeFont, moderateScale } from '../../../utils/responsive'; // Import responsive utils locally if needed for inline use or keep consistent with styles
 import { ZenToast } from '../../../components/ZenToast';
 
 // Months for picker
@@ -46,6 +47,7 @@ export const HistoryScreen: React.FC = () => {
   const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [sessions, setSessions] = useState<AttendanceSession[]>([]);
@@ -548,13 +550,38 @@ export const HistoryScreen: React.FC = () => {
     </View>
   );
 
+  // Handle focus and params
+  useFocusEffect(
+    useCallback(() => {
+      // Reset filters on every visit
+      setFilterYear('all');
+      setFilterSection('all');
+      setFilterPeriod('all');
+
+      // Check for params
+      if (route.params?.date) {
+        const paramDate = new Date(route.params.date);
+        setSelectedDate(paramDate);
+        // Clear params to avoid loop
+        navigation.setParams({ date: undefined });
+      } else {
+        // If no date param, force update to today/now to trigger useEffect refresh
+        // We use a new Date object to ensure reference change triggers useEffect
+        setSelectedDate(new Date());
+      }
+      
+      // Removed loadHistory() call here to avoid infinite loop (useEffect handles it)
+    }, [route.params?.date])
+  );
+
   // Render session card
   const renderSessionCard = (session: AttendanceSession, index: number) => {
     const isExpanded = expandedId === (session.id || String(index));
-    const healthColor = getHealthColor(session.present_count, session.total_students);
+    const effectivePresent = session.present_count + (session.od_count || 0);
+    const healthColor = getHealthColor(effectivePresent, session.total_students);
     const canEdit = isEditable(session.date);
     const percentage = session.total_students > 0 
-      ? Math.round((session.present_count / session.total_students) * 100) 
+      ? Math.round((effectivePresent / session.total_students) * 100) 
       : 0;
     
     // Substitution info - cast to any to access new fields
@@ -582,9 +609,21 @@ export const HistoryScreen: React.FC = () => {
           {/* Header */}
           <View style={styles.cardHeader}>
             <View style={styles.subjectInfo}>
-              <Text style={[styles.subject, { color: colors.textPrimary }]} numberOfLines={1}>
-                {session.subject?.name || 'Unknown Subject'}
-              </Text>
+              <View style={styles.subjectRow}>
+                  <Text style={[styles.subject, { color: colors.textPrimary, flex: 1 }]} numberOfLines={1}>
+                    {session.subject?.name || 'Unknown Subject'}
+                  </Text>
+                  
+                  {/* Percentage in Main Card */}
+                  <View style={[styles.percentageBadge, { 
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', 
+                  }]}>
+                      <Text style={[styles.percentageText, { color: healthColor }]}>
+                          {percentage}%
+                      </Text>
+                  </View>
+              </View>
+
               <Text style={[styles.meta, { color: colors.textSecondary }]}>
                 {session.target_dept}-{session.target_year}-{session.target_section} • {String(session.slot_id).toUpperCase()}
                 {session.batch ? ` • Batch ${session.batch}` : ''}
@@ -592,17 +631,17 @@ export const HistoryScreen: React.FC = () => {
               
               {/* Substitution Labels */}
               {isUserOriginal && substituteFacultyName && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Ionicons name="swap-horizontal" size={12} color={colors.warning} />
-                  <Text style={{ fontSize: 11, color: colors.warning, marginLeft: 4 }}>
+                <View style={styles.substitutionRow}>
+                  <Ionicons name="swap-horizontal" size={normalizeFont(12)} color={colors.warning} />
+                  <Text style={[styles.substitutionText, { color: colors.warning }]}>
                     Substituted by: {substituteFacultyName}
                   </Text>
                 </View>
               )}
               {isUserSubstitute && originalFacultyName && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Ionicons name="person-add" size={12} color={colors.indicator} />
-                  <Text style={{ fontSize: 11, color: colors.indicator, marginLeft: 4 }}>
+                <View style={styles.substitutionRow}>
+                  <Ionicons name="person-add" size={normalizeFont(12)} color={colors.indicator} />
+                  <Text style={[styles.substitutionText, { color: colors.indicator }]}>
                     Substituted for: {originalFacultyName}
                   </Text>
                 </View>
@@ -610,32 +649,26 @@ export const HistoryScreen: React.FC = () => {
               
               {/* Batch Badge for Lab Clarity */}
               {session.batch && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Ionicons name="flask" size={12} color="#8B5CF6" />
-                  <Text style={{ fontSize: 11, color: '#8B5CF6', marginLeft: 4, fontWeight: '600' }}>
+                <View style={styles.labBadge}>
+                  <Ionicons name="flask" size={normalizeFont(12)} color="#8B5CF6" />
+                  <Text style={[styles.labText, { color: '#8B5CF6' }]}>
                     Lab Session - Batch {session.batch}
                   </Text>
                 </View>
               )}
             </View>
             {isOfflinePending ? (
-               <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, gap: 8 }}>
+               <View style={styles.pendingBadge}>
                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Ionicons name="cloud-upload" size={14} color={colors.warning} />
-                    <Text style={{ marginLeft: 4, color: colors.warning, fontSize: 10, fontWeight: '700' }}>PENDING</Text>
+                    <Ionicons name="cloud-upload" size={normalizeFont(14)} color={colors.warning} />
+                    <Text style={[styles.pendingText, { color: colors.warning }]}>PENDING</Text>
                  </View>
                  {/* Quick Actions for Pending */}
-                 <TouchableOpacity onPress={() => handleDeletePending(session.id)} style={{ padding: 2 }}>
-                    <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                 <TouchableOpacity onPress={() => handleDeletePending(session.id)} style={styles.deletePendingBtn}>
+                    <Ionicons name="trash-outline" size={normalizeFont(16)} color={colors.danger} />
                  </TouchableOpacity>
                </View>
-            ) : (
-              <Ionicons 
-                name="cloud-done" 
-                size={16} 
-                color={colors.success} 
-              />
-            )}
+            ) : null}
           </View>
 
           {/* Stats Grid */}
@@ -645,7 +678,7 @@ export const HistoryScreen: React.FC = () => {
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total</Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.statBg }]}>
-              <Text style={[styles.statValue, { color: colors.success }]}>{session.present_count}</Text>
+              <Text style={[styles.statValue, { color: colors.success }]}>{effectivePresent}</Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>Present</Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.statBg }]}>
@@ -657,12 +690,7 @@ export const HistoryScreen: React.FC = () => {
           {/* Expanded Panel */}
           {isExpanded && (
             <View style={styles.expandPanel}>
-              {/* Percentage */}
-              <View style={styles.percentRow}>
-                <Text style={[styles.percentLabel, { color: colors.textSecondary }]}>Attendance</Text>
-                <Text style={[styles.percentValue, { color: healthColor }]}>{percentage}%</Text>
-              </View>
-
+              
               {/* Action Buttons */}
               <View style={styles.actionRow}>
                 <TouchableOpacity 
@@ -770,19 +798,12 @@ export const HistoryScreen: React.FC = () => {
         <View style={styles.titleRow}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity 
-              style={{ 
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
+              style={styles.headerBackButton}
               onPress={() => navigation.navigate('Home')}
             >
               <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
-            <View style={{ marginLeft: 12 }}>
+            <View style={styles.headerTitleContainer}>
               <Text style={styles.pageTitle}>History</Text>
               <Text style={styles.subtitle}>{formatDisplayDate()}</Text>
             </View>
@@ -819,7 +840,7 @@ export const HistoryScreen: React.FC = () => {
       )}
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: verticalScale(120) }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0D4A4A" />
@@ -849,9 +870,9 @@ export const HistoryScreen: React.FC = () => {
             return (
               <View style={[styles.emptyContainer, { 
                 backgroundColor: noClassInfo.isNoClass ? (isDark ? 'rgba(255, 140, 66, 0.08)' : 'rgba(255, 140, 66, 0.05)') : 'transparent',
-                borderRadius: 20,
-                marginHorizontal: 16,
-                paddingVertical: 40,
+                borderRadius: moderateScale(20),
+                marginHorizontal: scale(16),
+                paddingVertical: verticalScale(40),
               }]}>
                 <Text style={styles.emptyEmoji}>
                   {noClassInfo.isNoClass ? noClassInfo.emoji : '📅'}
@@ -879,19 +900,7 @@ export const HistoryScreen: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* Floating Dock */}
-      <View style={[styles.dock, { 
-        backgroundColor: colors.dockBg,
-        borderColor: colors.dockBorder,
-        bottom: insets.bottom + 16,
-      }]}>
-        <TouchableOpacity style={styles.dockItem} onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="home-outline" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.dockItem} onPress={() => navigation.navigate('Profile')}>
-          <Ionicons name="person-outline" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+
 
       {renderMonthPicker()}
 

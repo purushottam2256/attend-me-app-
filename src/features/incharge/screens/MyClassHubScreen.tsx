@@ -25,9 +25,11 @@ import {
   Image,
   Animated,
   Easing,
-  Linking, // Added Linking here
+
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -35,17 +37,18 @@ import { ZenToast } from '../../../components/ZenToast';
 import { safeHaptic } from '../../../utils/haptics';
 import * as Haptics from 'expo-haptics';
 
-import { BlurView } from 'expo-blur';
+
 
 import { TrafficLightZone, WatchlistCard, TrendsSection } from '../components';
 import { BellIcon } from '../../../components/BellIcon';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 import { supabase } from '../../../config/supabase';
-import { getClassStudents, getWatchlist, getKeyPeriodAttendance, getAllPeriodAttendance, getClassTrends, getAssignedClass, type StudentAggregate, type PeriodAttendance } from '../services/inchargeService';
+import { getClassStudents, getWatchlist, getKeyPeriodAttendance, getAllPeriodAttendance, getClassTrends, getAssignedClass, getCurrentSemester, type StudentAggregate, type PeriodAttendance } from '../services/inchargeService';
 import { Colors } from '../../../constants';
 import { cacheWatchlist, getCachedWatchlist, getCacheAge } from '../../../services/offlineService';
 import { useConnectionStatus } from '../../../hooks';
-import { RadarAnimation } from '../../scanning/components/RadarAnimation';
+
 
 interface ClassInfo {
   dept: string;
@@ -76,7 +79,7 @@ const WatchlistPager = ({ watchlist, colors, isDark, onMessage }: { watchlist: S
                 showsHorizontalScrollIndicator={false}
                 decelerationRate="fast"
                 snapToInterval={containerWidth}
-                style={{ maxHeight: 280 }}
+                style={{ maxHeight: 350 }}
                 onMomentumScrollEnd={(ev) => {
                     const x = ev.nativeEvent.contentOffset.x;
                     const index = Math.round(x / containerWidth);
@@ -149,6 +152,47 @@ export const MyClassHubScreen: React.FC = () => {
   const [showPeriodModal, setShowPeriodModal] = useState(false);
   const [periodData, setPeriodData] = useState<PeriodAttendance[]>([]);
   const [loadingPeriodStats, setLoadingPeriodStats] = useState(false);
+
+  // View All Students Modal
+  const [showAllStudents, setShowAllStudents] = useState(false);
+  const [loadingAll, setLoadingAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  // Percentage Range Filter State
+  const [filterMin, setFilterMin] = useState('');
+  const [filterMax, setFilterMax] = useState('');
+  const [semester, setSemester] = useState<string | null>(null);
+
+  const [allStudents, setAllStudents] = useState<StudentAggregate[]>([]);
+
+
+  const filteredAllStudents = useMemo(() => {
+      let result = allStudents.length > 0 ? allStudents : watchlist; // Default to watchlist if no "all students" fetch exists yet
+
+      // Search Filter
+      if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          result = result.filter(s => 
+              s.full_name.toLowerCase().includes(query) || 
+              s.roll_no.toLowerCase().includes(query)
+          );
+      }
+
+      // Percentage Range Filter
+      if (filterMin) {
+          const min = parseFloat(filterMin);
+          if (!isNaN(min)) {
+              result = result.filter(s => s.attendance_percentage >= min);
+          }
+      }
+      if (filterMax) {
+          const max = parseFloat(filterMax);
+          if (!isNaN(max)) {
+              result = result.filter(s => s.attendance_percentage <= max);
+          }
+      }
+
+      return result;
+  }, [watchlist, searchQuery, filterMin, filterMax]);
   
   const { status: connectionStatus } = useConnectionStatus();
 
@@ -198,14 +242,16 @@ export const MyClassHubScreen: React.FC = () => {
         }
       }
 
-      const [periods, students] = await Promise.all([
+      const [periods, students, currentSem] = await Promise.all([
         getKeyPeriodAttendance(info.dept, info.year, info.section),
         getWatchlist(info.dept, info.year, info.section, 60),
+        getCurrentSemester()
       ]);
 
       setP1(periods.p1);
       setP4(periods.p4);
       setWatchlist(students);
+      if (currentSem) setSemester(currentSem);
       
       // Cache watchlist for offline use (only if we have data)
       if (students.length > 0) {
@@ -256,20 +302,7 @@ export const MyClassHubScreen: React.FC = () => {
     setRefreshing(false);
   }, [loadData]);
 
-  // View All Modal Logic
-  const [showAllStudents, setShowAllStudents] = useState(false);
-  const [allStudents, setAllStudents] = useState<StudentAggregate[]>([]);
-  const [loadingAll, setLoadingAll] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredAllStudents = useMemo(() => {
-    if (!searchQuery) return allStudents;
-    const lower = searchQuery.toLowerCase();
-    return allStudents.filter(s => 
-      s.full_name.toLowerCase().includes(lower) || 
-      s.roll_no.toLowerCase().includes(lower)
-    );
-  }, [allStudents, searchQuery]);
 
   const handleAddPermission = () => {
     safeHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -359,27 +392,8 @@ export const MyClassHubScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: isDark ? '#000' : '#F2F2F7', justifyContent: 'center', alignItems: 'center' }}>
-          <LinearGradient
-            colors={isDark ? ['#0F172A', '#020617'] : ['#F8FAFC', '#E2E8F0']}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <RadarAnimation 
-                  detected={0} 
-                  total={0} 
-                  isScanning={true} 
-                  isAutoPilot={false} 
-              />
-              <Text style={{ 
-                  marginTop: 24, 
-                  color: isDark ? '#94A3B8' : '#64748B',
-                  fontSize: 15,
-                  fontWeight: '500',
-                  letterSpacing: 0.5
-              }}>
-                  Syncing Class Data...
-              </Text>
-          </View>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={{ marginTop: verticalScale(20), color: colors.textSecondary, fontSize: normalizeFont(16), fontWeight: '500' }}>Loading Class Data...</Text>
       </View>
     );
   }
@@ -387,10 +401,10 @@ export const MyClassHubScreen: React.FC = () => {
   if (error) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#111' : '#F5F5F5', gap: 12 }]}>
-        <Ionicons name="alert-circle" size={48} color={colors.textSecondary} />
+        <Ionicons name="alert-circle" size={normalizeFont(48)} color={colors.textSecondary} />
         <Text style={[styles.loadingText, { color: colors.textPrimary }]}>{error}</Text>
         <TouchableOpacity 
-          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: colors.accent, borderRadius: 8 }}
+          style={{ paddingHorizontal: scale(20), paddingVertical: verticalScale(10), backgroundColor: colors.accent, borderRadius: moderateScale(8) }}
           onPress={() => {
             setLoading(true);
             setError(null);
@@ -435,19 +449,19 @@ export const MyClassHubScreen: React.FC = () => {
       >
         {/* Apple Style Large Header */}
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(12) }}>
             <TouchableOpacity 
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
+                width: scale(44),
+                height: scale(44),
+                borderRadius: moderateScale(14),
                 backgroundColor: 'rgba(255,255,255,0.15)',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
               onPress={() => navigation.navigate('Home' as never)}
             >
-               <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+               <Ionicons name="chevron-back" size={normalizeFont(24)} color="#FFFFFF" />
             </TouchableOpacity>
             <View>
               <Text style={[styles.superTitle, { color: 'rgba(255,255,255,0.8)' }]}>
@@ -458,7 +472,7 @@ export const MyClassHubScreen: React.FC = () => {
               </Text>
             </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(12) }}>
             <BellIcon />
             <TouchableOpacity 
               style={[
@@ -466,7 +480,9 @@ export const MyClassHubScreen: React.FC = () => {
                 { 
                   backgroundColor: 'rgba(255,255,255,0.2)',
                   overflow: 'hidden',
-                  padding: 0 // Remove padding to let image fill
+                  padding: 0, // Remove padding to let image fill
+                  borderWidth: 2,
+                  borderColor: isDark ? colors.surface : '#FFFFFF',
                 }
               ]}
               onPress={() => navigation.navigate('Profile' as never)}
@@ -478,33 +494,38 @@ export const MyClassHubScreen: React.FC = () => {
                    resizeMode="cover"
                  />
                ) : (
-                 <Ionicons name="person" size={20} color="#FFFFFF" style={{ alignSelf: 'center', marginTop: 8 }} />
+                 <Ionicons name="person" size={normalizeFont(20)} color="#FFFFFF" style={{ alignSelf: 'center', marginTop: verticalScale(8) }} />
                )}
             </TouchableOpacity>
           </View>
         </View>
 
         {/* 1. Traffic Light Zone */}
-        <View style={{ marginBottom: 12 }}>
+        <View style={{ marginBottom: verticalScale(12) }}>
             <TrafficLightZone p1={p1} p4={p4} />
             <TouchableOpacity 
                 style={{ 
-                    marginTop: 8, 
-                    marginHorizontal: 20, 
-                    paddingVertical: 10, 
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                    borderRadius: 12,
+                    marginTop: verticalScale(8), 
+                    marginHorizontal: scale(20), 
+                    paddingVertical: verticalScale(12), 
+                    backgroundColor: isDark ? colors.surface : '#FFFFFF',
+                    borderRadius: moderateScale(16),
                     borderWidth: 1,
-                    borderColor: colors.border,
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 6
+                    gap: scale(6),
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: verticalScale(2) },
+                    shadowOpacity: isDark ? 0 : 0.05,
+                    shadowRadius: moderateScale(3),
+                    elevation: isDark ? 0 : 2
                 }}
                 onPress={handleViewPeriodStats}
             >
-                <Ionicons name="stats-chart" size={16} color={colors.accent} />
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textPrimary }}>View All Periods Attendance</Text>
+                <Ionicons name="stats-chart" size={normalizeFont(16)} color={colors.accent} />
+                <Text style={{ fontSize: normalizeFont(13), fontWeight: '600', color: colors.textPrimary }}>View All Periods Attendance</Text>
             </TouchableOpacity>
         </View>
 
@@ -512,7 +533,9 @@ export const MyClassHubScreen: React.FC = () => {
         <View style={styles.sectionContainer}>
             <View style={[styles.glassCard, { backgroundColor: colors.surface }]}>
                 <View style={styles.sectionHeaderRow}>
-                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Weekly Trends</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                        {trendRange.charAt(0).toUpperCase() + trendRange.slice(1)} Trends
+                    </Text>
                     
                     {/* Filter Pills */}
                     <View style={styles.filterRow}>
@@ -555,7 +578,7 @@ export const MyClassHubScreen: React.FC = () => {
               onPress={handleAddPermission}
             >
               <View style={[styles.iconCircle, { backgroundColor: 'rgba(52, 199, 89, 0.1)' }]}>
-                <Ionicons name="add" size={24} color="#34C759" />
+                <Ionicons name="add" size={normalizeFont(24)} color="#34C759" />
               </View>
               <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>Grant Leave</Text>
               <Text style={[styles.actionSubtitle, { color: colors.textSecondary }]}>Approve OD/Leave</Text>
@@ -567,7 +590,7 @@ export const MyClassHubScreen: React.FC = () => {
               onPress={() => navigation.navigate('ManagePermissions' as never)}
             >
               <View style={[styles.iconCircle, { backgroundColor: 'rgba(0, 122, 255, 0.1)' }]}>
-                <Ionicons name="list" size={24} color="#007AFF" />
+                <Ionicons name="list" size={normalizeFont(24)} color="#007AFF" />
               </View>
               <Text style={[styles.actionTitle, { color: colors.textPrimary }]}> manage</Text>
               <Text style={[styles.actionSubtitle, { color: colors.textSecondary }]}>View History</Text>
@@ -588,13 +611,13 @@ export const MyClassHubScreen: React.FC = () => {
                     </View>
                 </View>
                 <TouchableOpacity onPress={handleViewAll}>
-                  <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '500' }}>See All</Text>
+                  <Text style={{ color: colors.accent, fontSize: normalizeFont(15), fontWeight: '500' }}>See All</Text>
                 </TouchableOpacity>
               </View>
 
               {watchlist.length === 0 ? (
                 <View style={[styles.emptyState, { backgroundColor: 'transparent' }]}>
-                  <Ionicons name="checkmark-circle" size={48} color={colors.accent} />
+                  <Ionicons name="checkmark-circle" size={normalizeFont(48)} color={colors.accent} />
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No critical students</Text>
                 </View>
               ) : (
@@ -605,123 +628,252 @@ export const MyClassHubScreen: React.FC = () => {
 
       </ScrollView>
 
-      {/* View All Modal */}
-      <Modal visible={showAllStudents} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowAllStudents(false)}>
-        <View style={[styles.modalContainer, { backgroundColor: isDark ? '#0F172A' : '#F2F2F7' }]}>
-           <View style={[styles.modalHeader, { 
-               backgroundColor: isDark ? '#0F172A' : '#FFF',
-               paddingTop: Math.max(insets.top, 20) + 10 // Ensure clearance for notch
-           }]}>
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Class Roster</Text>
-                <TouchableOpacity onPress={() => setShowAllStudents(false)} style={styles.closeButton}>
-                    <Ionicons name="close-circle" size={30} color={colors.textSecondary} />
-                </TouchableOpacity>
-           </View>
-           
-           <View style={[styles.searchContainer, { backgroundColor: isDark ? '#1C1C1E' : '#FFF' }]}>
-                <View style={[styles.searchField, { backgroundColor: isDark ? '#2C2C2E' : '#E5E5EA' }]}>
-                    <Ionicons name="search" size={20} color={colors.textSecondary} />
-                    <TextInput 
-                        style={[styles.input, { color: colors.textPrimary }]} 
-                        placeholder="Search student" 
-                        placeholderTextColor={colors.textSecondary}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
-                </View>
-           </View>
+      {/* View All Modal - Zen Theme */}
+      <Modal visible={showAllStudents} animationType="fade" presentationStyle="overFullScreen" transparent={true} onRequestClose={() => setShowAllStudents(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)' }}>
+            <View style={[styles.modalContainer, { 
+                marginTop: 60, 
+                borderTopLeftRadius: 30, 
+                borderTopRightRadius: 30, 
+                backgroundColor: isDark ? colors.surface : '#F8FAFC',
+                overflow: 'hidden'
+            }]}>
+               {/* Header */}
+               <View style={{ 
+                   flexDirection: 'row', 
+                   justifyContent: 'space-between', 
+                   alignItems: 'center', 
+                   padding: 20, 
+                   paddingBottom: 10,
+                   borderBottomWidth: 1, 
+                   borderBottomColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' 
+               }}>
+                    <View>
+                        <Text style={{ fontSize: 22, fontWeight: '700', color: colors.textPrimary }}>Class Attendance</Text>
+                        <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
+                            {semester ? `Semester ${semester}` : 'Current Semester'} • {filteredAllStudents.length} Students
+                        </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setShowAllStudents(false)}>
+                        <Ionicons name="close-circle" size={32} color={colors.textSecondary} />
+                    </TouchableOpacity>
+               </View>
+               
+               {/* Controls: Search + Range Filter */}
+               <View style={{ padding: 16, gap: 12 }}>
+                    {/* Search */}
+                    <View style={{ 
+                        flexDirection: 'row', 
+                        alignItems: 'center', 
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', 
+                        borderRadius: 12, 
+                        paddingHorizontal: 12,
+                        height: 48
+                    }}>
+                        <Ionicons name="search" size={20} color={colors.textSecondary} />
+                        <TextInput 
+                            style={{ flex: 1, marginLeft: 10, color: colors.textPrimary, fontSize: 16 }} 
+                            placeholder="Search student..." 
+                            placeholderTextColor={colors.textSecondary}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
+                    </View>
 
-           {loadingAll ? (
-               <ActivityIndicator style={{marginTop: 50}} color={colors.accent}/>
-           ) : (
-               <FlatList
-                    data={filteredAllStudents}
-                    keyExtractor={item => item.student_id}
-                    contentContainerStyle={{padding: 16}}
-                    renderItem={({item}) => (
-                        <View style={[styles.studentRow, { backgroundColor: isDark ? '#1C1C1E' : '#FFF' }]}>
-                            <View>
-                                <Text style={[styles.studentName, { color: colors.textPrimary }]}>{item.full_name}</Text>
-                                <Text style={[styles.studentRoll, { color: colors.textSecondary }]}>{item.roll_no}</Text>
-                            </View>
-                            <View style={{alignItems: 'flex-end'}}>
-                                <Text style={[styles.studentPercent, { color: colors.textPrimary }]}>{Math.round(item.attendance_percentage)}%</Text>
-                            </View>
-                        </View>
-                    )}
-               />
-           )}
+                    {/* Percentage Range Filter */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(12) }}>
+                         <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 13 }}>ATTENDANCE %</Text>
+                         <View style={{ flex: 1, flexDirection: 'row', gap: 8 }}>
+                             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderRadius: 8, paddingHorizontal: 10, height: 40 }}>
+                                 <Text style={{ color: colors.textSecondary, marginRight: 4 }}>Min</Text>
+                                 <TextInput 
+                                     style={{ flex: 1, color: colors.textPrimary, fontWeight: '600' }}
+                                     placeholder="0"
+                                     placeholderTextColor={colors.textSecondary}
+                                     keyboardType="numeric"
+                                     maxLength={3}
+                                     value={filterMin}
+                                     onChangeText={setFilterMin}
+                                 />
+                             </View>
+                             <Text style={{ alignSelf: 'center', color: colors.textSecondary }}>-</Text>
+                             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderRadius: 8, paddingHorizontal: 10, height: 40 }}>
+                                 <Text style={{ color: colors.textSecondary, marginRight: 4 }}>Max</Text>
+                                 <TextInput 
+                                     style={{ flex: 1, color: colors.textPrimary, fontWeight: '600' }}
+                                     placeholder="100"
+                                     placeholderTextColor={colors.textSecondary}
+                                     keyboardType="numeric"
+                                     maxLength={3}
+                                     value={filterMax}
+                                     onChangeText={setFilterMax}
+                                 />
+                             </View>
+                         </View>
+                    </View>
+               </View>
+
+               {loadingAll ? (
+                   <ActivityIndicator style={{marginTop: 50}} color={colors.accent}/>
+               ) : (
+                   <FlatList
+                        data={filteredAllStudents}
+                        keyExtractor={item => item.student_id}
+                        contentContainerStyle={{padding: 16, paddingBottom: 60}}
+                        renderItem={({item}) => {
+                            // Avatar Initials
+                            const initials = item.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+                            const avatarColors = ['#FCA5A5', '#FDBA74', '#FCD34D', '#86EFAC', '#6EE7B7', '#93C5FD', '#A5B4FC', '#C4B5FD', '#F9A8D4'];
+                            const avatarBg = avatarColors[item.full_name.length % avatarColors.length];
+                            
+                            // Status Badge
+                            let badgeColor = '#10B981'; // Green
+                            let badgeText = 'Good';
+                            if (item.attendance_percentage < 65) {
+                                badgeColor = '#EF4444'; // Red
+                                badgeText = 'Critical';
+                            } else if (item.attendance_percentage < 75) {
+                                 badgeColor = '#F59E0B'; // Amber
+                                 badgeText = 'Warning';
+                            }
+
+                            return (
+                                <View style={{ 
+                                    backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
+                                    borderRadius: moderateScale(16),
+                                    marginBottom: 10,
+                                    padding: 14,
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    shadowColor: "#000",
+                                    shadowOffset: {width: 0, height: 1},
+                                    shadowOpacity: 0.05,
+                                    shadowRadius: 2,
+                                    elevation: 1,
+                                    borderWidth: 1,
+                                    borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+                                }}>
+                                    {/* Avatar */}
+                                    <View style={{ 
+                                        width: 44, height: 44, borderRadius: 22, 
+                                        backgroundColor: avatarBg, 
+                                        alignItems: 'center', justifyContent: 'center', marginRight: 14 
+                                    }}>
+                                        <Text style={{ fontSize: 15, fontWeight: '700', color: '#FFF' }}>{initials}</Text>
+                                    </View>
+
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={{ fontWeight: '700', fontSize: 16, color: colors.textPrimary, marginBottom: 2 }}>
+                                            {item.full_name}
+                                        </Text>
+                                        <Text style={{ fontSize: 13, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', color: colors.textSecondary }}>
+                                            {item.roll_no}
+                                        </Text>
+                                    </View>
+
+                                    <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                                         <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: `${badgeColor}20` }}>
+                                             <Text style={{ fontSize: 11, fontWeight: '700', color: badgeColor }}>
+                                                 {Math.round(item.attendance_percentage)}%
+                                             </Text>
+                                         </View>
+                                         <View style={{ flexDirection: 'row', gap: 10 }}>
+                                             {item.student_mobile && (
+                                                <TouchableOpacity onPress={() => Linking.openURL(`whatsapp://send?phone=${item.student_mobile}`)}>
+                                                    <Ionicons name="logo-whatsapp" size={18} color="#22C55E" />
+                                                </TouchableOpacity>
+                                             )}
+                                             {item.parent_mobile && (
+                                                <TouchableOpacity onPress={() => Linking.openURL(`tel:${item.parent_mobile}`)}>
+                                                    <Ionicons name="call" size={18} color="#3B82F6" />
+                                                </TouchableOpacity>
+                                             )}
+                                         </View>
+                                    </View>
+                                </View>
+                            );
+                        }}
+                   />
+               )}
+            </View>
         </View>
       </Modal>
 
-      {/* Period Stats Modal */}
-      <Modal visible={showPeriodModal} animationType="fade" transparent onRequestClose={() => setShowPeriodModal(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
-            <BlurView intensity={30} style={[styles.glassCard, { backgroundColor: isDark ? 'rgba(28,28,30,0.95)' : 'rgba(255,255,255,0.95)', padding: 0 }]}>
-                <View style={[styles.modalHeader, { paddingVertical: 16 }]}>
-                    <Text style={[styles.modalTitle, { fontSize: 20, color: colors.textPrimary }]}>Today's Attendance</Text>
-                    <TouchableOpacity onPress={() => setShowPeriodModal(false)} style={styles.closeButton}>
-                        <Ionicons name="close-circle" size={28} color={colors.textSecondary} />
-                    </TouchableOpacity>
-                </View>
-
-                {loadingPeriodStats ? (
-                    <View style={{ padding: 40, alignItems: 'center' }}>
-                        <ActivityIndicator color={colors.accent} />
+      {/* Period Stats Modal - Zen Theme */}
+      <Modal visible={showPeriodModal} animationType="fade" transparent={true} onRequestClose={() => setShowPeriodModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
+            {/* Glass Container */}
+            <View style={{ borderRadius: 24, overflow: 'hidden', backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }}>
+                <LinearGradient
+                    colors={isDark ? [Colors.premium.gradientStart, Colors.premium.gradientEnd] : ['#FFFFFF', '#F0F0F0']}
+                    style={{ padding: 0 }}
+                >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+                        <Text style={{ fontSize: 18, fontWeight: '700', color: isDark ? '#FFF' : '#000' }}>Period Attendance</Text>
+                        <TouchableOpacity onPress={() => setShowPeriodModal(false)}>
+                            <Ionicons name="close-circle" size={28} color={isDark ? 'rgba(255,255,255,0.7)' : '#666'} />
+                        </TouchableOpacity>
                     </View>
-                ) : (
-                    <FlatList
-                        data={periodData}
-                        keyExtractor={item => item.slot_id}
-                        contentContainerStyle={{ padding: 16 }}
-                        renderItem={({ item }) => (
-                            <View style={{ 
-                                flexDirection: 'row', 
-                                justifyContent: 'space-between', 
-                                alignItems: 'center', 
-                                paddingVertical: 12,
-                                borderBottomWidth: 1,
-                                borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-                            }}>
-                                <View style={{ width: 60 }}>
-                                    <View style={{ 
-                                        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', 
-                                        paddingVertical: 4, 
-                                        borderRadius: 6,
-                                        alignItems: 'center'
-                                    }}>
-                                        <Text style={{ fontWeight: '700', color: colors.textPrimary, textTransform: 'uppercase' }}>
-                                            {item.slot_id.replace(/^p/i, 'Period ')}
+
+                    {loadingPeriodStats ? (
+                        <View style={{ padding: 40, alignItems: 'center' }}>
+                            <ActivityIndicator color={Colors.premium.accent} />
+                        </View>
+                    ) : (
+                        <FlatList
+                            data={periodData}
+                            keyExtractor={item => item.slot_id}
+                            contentContainerStyle={{ padding: 16 }}
+                            renderItem={({ item }) => (
+                                <View style={{ 
+                                    flexDirection: 'row', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center', 
+                                    paddingVertical: 12,
+                                    borderBottomWidth: 1,
+                                    borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+                                }}>
+                                    <View style={{ width: 60 }}>
+                                        <View style={{ 
+                                            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', 
+                                            paddingVertical: 6, 
+                                            borderRadius: 8,
+                                            alignItems: 'center'
+                                        }}>
+                                            <Text style={{ fontWeight: '700', color: isDark ? '#FFF' : '#333', fontSize: 13 }}>
+                                                {item.slot_id.replace(/^p/i, 'P')}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    
+                                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 16 }}>
+                                        <View style={{ alignItems: 'center' }}>
+                                            <Text style={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.5)' : '#666', marginBottom: 2 }}>Present</Text>
+                                            <Text style={{ fontSize: 15, fontWeight: '700', color: Colors.premium.accent }}>{item.present_count}</Text>
+                                        </View>
+                                        <View style={{ width: 1, height: 24, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                                        <View style={{ alignItems: 'center' }}>
+                                            <Text style={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.5)' : '#666', marginBottom: 2 }}>Total</Text>
+                                            <Text style={{ fontSize: 15, fontWeight: '700', color: isDark ? '#FFF' : '#333' }}>{item.total_count}</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={{ width: 60, alignItems: 'flex-end' }}>
+                                        <Text style={{ fontSize: 16, fontWeight: '700', color: item.percentage < 75 ? Colors.premium.danger : Colors.premium.accent }}>
+                                            {item.percentage}%
                                         </Text>
                                     </View>
                                 </View>
-                                
-                                <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 16 }}>
-                                    <View style={{ alignItems: 'center' }}>
-                                        <Text style={{ fontSize: 12, color: colors.textSecondary }}>Present</Text>
-                                        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.accent }}>{item.present_count}</Text>
-                                    </View>
-                                    <View style={{ alignItems: 'center' }}>
-                                        <Text style={{ fontSize: 12, color: colors.textSecondary }}>Total</Text>
-                                        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.textPrimary }}>{item.total_count}</Text>
-                                    </View>
+                            )}
+                            ListEmptyComponent={
+                                <View style={{ padding: 20, alignItems: 'center' }}>
+                                    <Text style={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#666' }}>No attendance recorded yet today.</Text>
                                 </View>
-
-                                <View style={{ width: 60, alignItems: 'flex-end' }}>
-                                    <Text style={{ fontSize: 18, fontWeight: '800', color: item.percentage < 75 ? '#FF3B30' : colors.accent }}>
-                                        {item.percentage}%
-                                    </Text>
-                                </View>
-                            </View>
-                        )}
-                        ListEmptyComponent={
-                            <View style={{ padding: 20, alignItems: 'center' }}>
-                                <Text style={{ color: colors.textSecondary }}>No attendance recorded yet today.</Text>
-                            </View>
-                        }
-                    />
-                )}
-            </BlurView>
+                            }
+                        />
+                    )}
+                </LinearGradient>
+            </View>
         </View>
       </Modal>
 
@@ -738,86 +890,93 @@ export const MyClassHubScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingText: { marginTop: 10, fontSize: 16, fontWeight: '500' },
+  loadingText: { marginTop: verticalScale(10), fontSize: normalizeFont(16), fontWeight: '500' },
+  studentItem: {
+      shadowColor: "#000", 
+      shadowOffset: { width: 0, height: verticalScale(2) }, 
+      shadowOpacity: 0.05, 
+      shadowRadius: moderateScale(4), 
+      elevation: 2 
+  },
   scrollView: { flex: 1 },
 
   // Background Orbs
   orb: {
     position: 'absolute',
-    borderRadius: 200,
+    borderRadius: moderateScale(200),
   },
   orb1: {
-    width: 300,
-    height: 300,
+    width: scale(300),
+    height: scale(300),
     backgroundColor: 'rgba(61, 220, 151, 0.15)',
-    top: -100,
-    right: -100,
+    top: verticalScale(-100),
+    right: scale(-100),
   },
   orb2: {
-    width: 250,
-    height: 250,
+    width: scale(250),
+    height: scale(250),
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    bottom: 200,
-    left: -80,
+    bottom: verticalScale(200),
+    left: scale(-80),
   },
   orb3: {
-    width: 180,
-    height: 180,
+    width: scale(180),
+    height: scale(180),
     backgroundColor: 'rgba(61, 220, 151, 0.08)',
-    bottom: 400,
-    right: -40,
+    bottom: verticalScale(400),
+    right: scale(-40),
   },
 
   // Header
-  header: { paddingHorizontal: 20, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  superTitle: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  mainTitle: { fontSize: 34, fontWeight: '800', letterSpacing: -0.5 },
-  profileBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', shadowColor: "#000", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 },
+  header: { paddingHorizontal: scale(20), marginBottom: verticalScale(10), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  superTitle: { fontSize: normalizeFont(13), fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: verticalScale(4) },
+  mainTitle: { fontSize: normalizeFont(34), fontWeight: '800', letterSpacing: -0.5 },
+  profileBtn: { width: scale(40), height: scale(40), borderRadius: moderateScale(20), alignItems: 'center', justifyContent: 'center', shadowColor: "#000", shadowOffset: {width: 0, height: verticalScale(2)}, shadowOpacity: 0.1, shadowRadius: moderateScale(8), elevation: 2 },
 
   // Sections
-  sectionContainer: { marginTop: 24, paddingHorizontal: 20 },
-  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sectionTitle: { fontSize: 20, fontWeight: '700', letterSpacing: -0.5 },
+  sectionContainer: { marginTop: verticalScale(24), paddingHorizontal: scale(20) },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: verticalScale(16) },
+  sectionTitle: { fontSize: normalizeFont(20), fontWeight: '700', letterSpacing: -0.5 },
   
   // Filters
-  filterRow: { flexDirection: 'row', gap: 8 },
-  filterPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  filterText: { fontSize: 13, fontWeight: '600', textTransform: 'capitalize' },
+  filterRow: { flexDirection: 'row', gap: scale(8) },
+  filterPill: { paddingHorizontal: scale(12), paddingVertical: verticalScale(6), borderRadius: moderateScale(20) },
+  filterText: { fontSize: normalizeFont(13), fontWeight: '600', textTransform: 'capitalize' },
 
   // Action Cards
-  actionGrid: { flexDirection: 'row', gap: 12 },
-  actionCard: { flex: 1, padding: 20, borderRadius: 20, shadowColor: "#000", shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 },
-  iconCircle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  actionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 2 },
-  actionSubtitle: { fontSize: 13 },
+  actionGrid: { flexDirection: 'row', gap: scale(12) },
+  actionCard: { flex: 1, padding: scale(20), borderRadius: moderateScale(20), shadowColor: "#000", shadowOffset: {width: 0, height: verticalScale(4)}, shadowOpacity: 0.05, shadowRadius: moderateScale(12), elevation: 2 },
+  iconCircle: { width: scale(44), height: scale(44), borderRadius: moderateScale(22), alignItems: 'center', justifyContent: 'center', marginBottom: verticalScale(12) },
+  actionTitle: { fontSize: normalizeFont(16), fontWeight: '600', marginBottom: verticalScale(2) },
+  actionSubtitle: { fontSize: normalizeFont(13) },
 
   // Badge
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  badgeText: { fontSize: 12, fontWeight: '700' },
+  badge: { paddingHorizontal: scale(8), paddingVertical: verticalScale(2), borderRadius: moderateScale(8) },
+  badgeText: { fontSize: normalizeFont(12), fontWeight: '700' },
 
   // Empty State
-  emptyState: { padding: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  emptyText: { fontSize: 16, fontWeight: '500' },
+  emptyState: { padding: scale(40), borderRadius: moderateScale(20), alignItems: 'center', justifyContent: 'center', gap: scale(12) },
+  emptyText: { fontSize: normalizeFont(16), fontWeight: '500' },
 
   // Modal
   modalContainer: { flex: 1 },
-  modalHeader: { padding: 20, paddingTop: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalTitle: { fontSize: 24, fontWeight: '700' },
-  closeButton: { padding: 4 },
-  searchContainer: { paddingHorizontal: 20, paddingBottom: 16 },
-  searchField: { flexDirection: 'row', alignItems: 'center', height: 44, borderRadius: 12, paddingHorizontal: 12, gap: 10 },
-  input: { flex: 1, fontSize: 16 },
-  studentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, marginBottom: 8, borderRadius: 12, marginHorizontal: 20 },
-  studentName: { fontSize: 16, fontWeight: '600' },
-  studentRoll: { fontSize: 13, marginTop: 2 },
-  studentPercent: { fontSize: 18, fontWeight: '700' },
+  modalHeader: { padding: scale(20), paddingTop: verticalScale(20), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { fontSize: normalizeFont(24), fontWeight: '700' },
+  closeButton: { padding: scale(4) },
+  searchContainer: { paddingHorizontal: scale(20), paddingBottom: verticalScale(16) },
+  searchField: { flexDirection: 'row', alignItems: 'center', height: verticalScale(44), borderRadius: moderateScale(12), paddingHorizontal: scale(12), gap: scale(10) },
+  input: { flex: 1, fontSize: normalizeFont(16) },
+  studentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: scale(16), marginBottom: verticalScale(8), borderRadius: moderateScale(12), marginHorizontal: scale(20) },
+  studentName: { fontSize: normalizeFont(16), fontWeight: '600' },
+  studentRoll: { fontSize: normalizeFont(13), marginTop: verticalScale(2) },
+  studentPercent: { fontSize: normalizeFont(18), fontWeight: '700' },
   glassCard: {
-    padding: 20,
-    borderRadius: 24,
+    padding: scale(20),
+    borderRadius: moderateScale(24),
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowRadius: moderateScale(12),
     elevation: 2,
     width: '100%'
   },

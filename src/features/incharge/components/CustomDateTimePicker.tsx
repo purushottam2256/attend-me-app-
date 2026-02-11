@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface CustomDateTimePickerProps {
   visible: boolean;
@@ -140,7 +141,7 @@ export const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
                 key={`day-${day}`}
                 style={[
                     styles.dayCell,
-                    isSelected && { backgroundColor: colors.selectedBg, borderRadius: 20 },
+                    isSelected && { backgroundColor: colors.selectedBg, borderRadius: moderateScale(20) },
                 ]}
                 disabled={disabled}
                 onPress={() => {
@@ -202,13 +203,13 @@ export const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
             {/* Hours */}
             <View style={styles.timeColumn}>
                 <TouchableOpacity onPress={() => incrementHour(1)} style={styles.timeBtn}>
-                    <Ionicons name="chevron-up" size={24} color={colors.textSec} />
+                    <Ionicons name="chevron-up" size={normalizeFont(24)} color={colors.textSec} />
                 </TouchableOpacity>
                 <Text style={[styles.timeText, { color: colors.text }]}>
                     {displayHours.toString().padStart(2, '0')}
                 </Text>
                 <TouchableOpacity onPress={() => incrementHour(-1)} style={styles.timeBtn}>
-                    <Ionicons name="chevron-down" size={24} color={colors.textSec} />
+                    <Ionicons name="chevron-down" size={normalizeFont(24)} color={colors.textSec} />
                 </TouchableOpacity>
             </View>
 
@@ -276,13 +277,13 @@ export const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
                 <>
                     <View style={styles.monthSelector}>
                         <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.navBtn}>
-                            <Ionicons name="chevron-back" size={20} color={colors.text} />
+                            <Ionicons name="chevron-back" size={normalizeFont(20)} color={colors.text} />
                         </TouchableOpacity>
                         <Text style={[styles.monthText, { color: colors.text }]}>
                             {MONTHS[viewMonth]} {viewYear}
                         </Text>
                         <TouchableOpacity onPress={() => changeMonth(1)} style={styles.navBtn}>
-                            <Ionicons name="chevron-forward" size={20} color={colors.text} />
+                            <Ionicons name="chevron-forward" size={normalizeFont(20)} color={colors.text} />
                         </TouchableOpacity>
                     </View>
                     {renderCalendar()}
@@ -313,117 +314,117 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
   },
   dialog: {
     width: '100%',
-    maxWidth: 360,
-    borderRadius: 20,
+    maxWidth: scale(360),
+    borderRadius: moderateScale(20),
     overflow: 'hidden',
     elevation: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
+    shadowOffset: { width: 0, height: verticalScale(12) },
     shadowOpacity: 0.5,
-    shadowRadius: 16,
+    shadowRadius: moderateScale(16),
   },
   header: {
-    padding: 16,
+    padding: scale(16),
     borderBottomWidth: 1,
   },
   headerTitle: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   headerDisplay: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   displayText: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: '700',
   },
   content: {
-    padding: 16,
+    padding: scale(16),
   },
   // Calendar Styles
   monthSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   monthText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
   },
   navBtn: {
-    padding: 8,
+    padding: scale(8),
   },
   calendarGrid: {
-    gap: 8,
+    gap: scale(8),
   },
   daysHeader: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   dayHeaderLabel: {
-    width: 32,
+    width: scale(32),
     textAlign: 'center',
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
   },
   daysGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-around',
-    rowGap: 8,
+    rowGap: verticalScale(8),
   },
   dayCell: {
-    width: 36,
-    height: 36,
+    width: scale(36),
+    height: scale(36),
     alignItems: 'center',
     justifyContent: 'center',
   },
   dayText: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
   },
   // Time Styles
   timeContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 24,
-    gap: 16,
+    paddingVertical: verticalScale(24),
+    gap: scale(16),
   },
   timeColumn: {
     alignItems: 'center',
-    gap: 8,
+    gap: scale(8),
   },
   timeBtn: {
-    padding: 8,
+    padding: scale(8),
   },
   timeText: {
-    fontSize: 32,
+    fontSize: normalizeFont(32),
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   timeSeparator: {
-    fontSize: 32,
+    fontSize: normalizeFont(32),
     fontWeight: '700',
-    paddingBottom: 8,
+    paddingBottom: verticalScale(8),
   },
   amPmContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginLeft: 16,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(12),
+    marginLeft: scale(16),
   },
   amPmText: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '700',
   },
   // Footer
@@ -435,10 +436,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: verticalScale(16),
   },
   footerBtnText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '500',
   },
 });

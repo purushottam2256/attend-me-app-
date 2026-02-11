@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 import { StudentAggregate } from '../services/inchargeService';
 
 interface StudentSelectionListProps {
@@ -82,9 +83,9 @@ export const StudentSelectionList: React.FC<StudentSelectionListProps> = ({
 
         <View style={styles.checkbox}>
             {isSelected ? (
-                <Ionicons name="checkmark-circle" size={24} color={colors.selectedBorder} />
+                <Ionicons name="checkmark-circle" size={normalizeFont(24)} color={colors.selectedBorder} />
             ) : (
-                <Ionicons name="ellipse-outline" size={24} color={colors.textSec} />
+                <Ionicons name="ellipse-outline" size={normalizeFont(24)} color={colors.textSec} />
             )}
         </View>
       </TouchableOpacity>
@@ -96,7 +97,7 @@ export const StudentSelectionList: React.FC<StudentSelectionListProps> = ({
       {/* Search Bar */}
       <View style={[styles.searchContainer, { borderBottomColor: colors.border }]}>
         <View style={[styles.searchBar, { backgroundColor: colors.inputBg }]}>
-            <Ionicons name="search" size={20} color={colors.textSec} />
+            <Ionicons name="search" size={normalizeFont(20)} color={colors.textSec} />
             <TextInput
                 style={[styles.input, { color: colors.text }]}
                 placeholder="Search by name or roll number..."
@@ -106,7 +107,7 @@ export const StudentSelectionList: React.FC<StudentSelectionListProps> = ({
             />
             {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')}>
-                    <Ionicons name="close-circle" size={18} color={colors.textSec} />
+                    <Ionicons name="close-circle" size={normalizeFont(18)} color={colors.textSec} />
                 </TouchableOpacity>
             )}
         </View>
@@ -128,56 +129,56 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchContainer: {
-    padding: 16,
+    padding: scale(16),
     borderBottomWidth: 1,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    height: 44,
-    borderRadius: 12,
-    gap: 8,
+    paddingHorizontal: scale(12),
+    height: verticalScale(44),
+    borderRadius: moderateScale(12),
+    gap: scale(8),
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: normalizeFont(15),
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: verticalScale(20),
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: scale(16),
     borderBottomWidth: 1,
   },
   left: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
+      gap: scale(12),
   },
   avatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: scale(40),
+      height: scale(40),
+      borderRadius: moderateScale(20),
       alignItems: 'center',
       justifyContent: 'center',
   },
   avatarText: {
-      fontSize: 14,
+      fontSize: normalizeFont(14),
       fontWeight: '600',
   },
   name: {
-      fontSize: 15,
+      fontSize: normalizeFont(15),
       fontWeight: '600',
   },
   roll: {
-      fontSize: 13,
-      marginTop: 2,
+      fontSize: normalizeFont(13),
+      marginTop: verticalScale(2),
   },
   checkbox: {
-      paddingLeft: 16,
+      paddingLeft: scale(16),
   }
 });

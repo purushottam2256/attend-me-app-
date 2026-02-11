@@ -6,6 +6,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
+import { scale, moderateScale } from '../utils/responsive';
 
 interface ProgressRingProps {
   progress: number; // 0-100
@@ -18,8 +19,8 @@ interface ProgressRingProps {
 
 export const ProgressRing: React.FC<ProgressRingProps> = ({
   progress,
-  size = 120,
-  strokeWidth = 8,
+  size = moderateScale(120),
+  strokeWidth = scale(8),
   backgroundColor = 'rgba(255,255,255,0.15)',
   progressColor = '#3DDC97',
   children,
@@ -90,8 +91,8 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
         {[...Array(12)].map((_, i) => {
           const angle = (i * 30 * Math.PI) / 180;
           const radius = (size - strokeWidth) / 2;
-          const x = radius * Math.cos(angle) + size / 2 - 4;
-          const y = radius * Math.sin(angle) + size / 2 - 4;
+          const x = radius * Math.cos(angle) + size / 2 - scale(4);
+          const y = radius * Math.sin(angle) + size / 2 - scale(4);
           const shouldShow = (i / 12) * 100 <= progress;
           
           return (
@@ -116,9 +117,9 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
         style={[
           styles.glowRing,
           {
-            width: size + 8,
-            height: size + 8,
-            borderRadius: (size + 8) / 2,
+            width: size + scale(8),
+            height: size + scale(8),
+            borderRadius: (size + scale(8)) / 2,
             borderWidth: 2,
             borderColor: progressColor,
             opacity: animatedValue.interpolate({
@@ -150,9 +151,9 @@ const styles = StyleSheet.create({
   },
   progressDot: {
     position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: moderateScale(4),
   },
   glowRing: {
     position: 'absolute',

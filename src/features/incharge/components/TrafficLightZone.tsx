@@ -9,6 +9,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface PeriodData {
   slot_id: string;
@@ -36,9 +37,9 @@ const ZenLight: React.FC<{
     <View style={[styles.zenCard, { 
       backgroundColor: isDark ? '#082020' : '#FFFFFF',
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
+      shadowOffset: { width: 0, height: verticalScale(4) },
       shadowOpacity: 0.05,
-      shadowRadius: 12,
+      shadowRadius: moderateScale(12),
       elevation: 2
     }]}>
       <Text style={[styles.periodLabel, { color: isDark ? '#8E8E93' : '#86868B' }]}>
@@ -49,7 +50,7 @@ const ZenLight: React.FC<{
         {data ? (
             <View style={{alignItems: 'center'}}>
                 <Text style={[styles.percentText, { color: isDark ? '#FFF' : '#000' }]}>
-                    {percentage}<Text style={{fontSize: 20, color: '#8E8E93'}}>%</Text>
+                    {percentage}<Text style={{fontSize: normalizeFont(20), color: '#8E8E93'}}>%</Text>
                 </Text>
                 <View style={[styles.statusBar, { backgroundColor: ringColor }]} />
             </View>
@@ -82,43 +83,43 @@ export const TrafficLightZone: React.FC<TrafficLightZoneProps> = ({ p1, p4 }) =>
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
-    marginTop: 20,
+    marginHorizontal: scale(20),
+    marginTop: verticalScale(20),
   },
   row: {
     flexDirection: 'row',
-    gap: 16,
+    gap: scale(16),
   },
   zenCard: {
     flex: 1,
-    padding: 20,
-    borderRadius: 24,
+    padding: scale(20),
+    borderRadius: moderateScale(24),
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 140,
+    minHeight: verticalScale(140),
   },
   periodLabel: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   centerContent: {
-    marginVertical: 12,
+    marginVertical: verticalScale(12),
   },
   percentText: {
-    fontSize: 42,
+    fontSize: normalizeFont(42),
     fontWeight: '800',
     letterSpacing: -1,
   },
   statusBar: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 8,
+    width: scale(40),
+    height: verticalScale(4),
+    borderRadius: moderateScale(2),
+    marginTop: verticalScale(8),
   },
   countText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '500',
   }
 });

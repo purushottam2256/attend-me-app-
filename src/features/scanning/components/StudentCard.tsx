@@ -16,8 +16,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
-const SWIPE_THRESHOLD = 50;
+const SWIPE_THRESHOLD = scale(50);
 
 
 type StudentStatus = 'pending' | 'present' | 'absent' | 'od' | 'leave';
@@ -167,12 +168,12 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     <View style={styles.container}>
       {/* Background reveal - Absent */}
       <Animated.View style={[styles.bgReveal, styles.bgRevealLeft, { opacity: leftBgOpacity }]}>
-        <Ionicons name="close" size={18} color="#FFFFFF" />
+        <Ionicons name="close" size={normalizeFont(18)} color="#FFFFFF" />
       </Animated.View>
 
       {/* Background reveal - Present */}
       <Animated.View style={[styles.bgReveal, styles.bgRevealRight, { opacity: rightBgOpacity }]}>
-        <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+        <Ionicons name="checkmark" size={normalizeFont(18)} color="#FFFFFF" />
       </Animated.View>
 
       {/* Card */}
@@ -221,7 +222,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
             <View style={[styles.statusIndicator, { backgroundColor: statusStyle.accent }]}>
               <Ionicons 
                 name={status === 'present' ? 'checkmark' : status === 'absent' ? 'close' : 'remove'} 
-                size={10} 
+                size={normalizeFont(10)} 
                 color="#FFFFFF" 
               />
             </View>
@@ -234,18 +235,18 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 12,
-    marginBottom: 6,
-    height: 52,
+    marginHorizontal: scale(12),
+    marginBottom: verticalScale(6),
+    height: verticalScale(52),
   },
   bgReveal: {
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 52,
+    width: scale(52),
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
+    borderRadius: moderateScale(14),
   },
   bgRevealLeft: {
     right: 0,
@@ -256,21 +257,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#34C759',
   },
   card: {
-    borderRadius: 14,
+    borderRadius: moderateScale(14),
     borderWidth: 1,
     height: '100%',
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: verticalScale(6),
+    paddingHorizontal: scale(10),
     height: '100%',
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: moderateScale(18),
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -281,39 +282,39 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   avatarText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
   },
   info: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: scale(10),
   },
   name: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   rollNo: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     fontWeight: '500',
-    marginTop: 1,
+    marginTop: verticalScale(1),
   },
   statusIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: scale(20),
+    height: scale(20),
+    borderRadius: moderateScale(10),
     alignItems: 'center',
     justifyContent: 'center',
   },
   statusTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: scale(6),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(6),
     alignItems: 'center',
     justifyContent: 'center',
   },
   statusTagText: {
-    fontSize: 9,
+    fontSize: normalizeFont(9),
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.5,

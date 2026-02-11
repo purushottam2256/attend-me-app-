@@ -23,9 +23,11 @@ interface DigitalIdCardProps {
   onEdit?: () => void;
 }
 
+import { scale, verticalScale, moderateScale, normalizeFont } from "../../../utils/responsive";
+
 const { width } = Dimensions.get("window");
 const CARD_ASPECT_RATIO = 1.586;
-const CARD_WIDTH = width - 40;
+const CARD_WIDTH = width - scale(40);
 const CARD_HEIGHT = CARD_WIDTH / CARD_ASPECT_RATIO;
 
 export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
@@ -190,13 +192,20 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
               <View style={styles.row}>
                 <View style={styles.column}>
                   <Text style={styles.label}>DEPARTMENT</Text>
-                  <Text style={styles.value}>{user.dept || "CSE"}</Text>
+                  <Text 
+                    style={styles.value}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  >
+                    {user.dept || "CSE"}
+                  </Text>
                 </View>
                 <View style={styles.column}>
                   <Text style={styles.label}>FACULTY ID</Text>
                   <Text
                     style={[styles.value, { fontSize: 10 }]}
                     numberOfLines={1}
+                    adjustsFontSizeToFit
                   >
                     {user.email || "N/A"}
                   </Text>
@@ -224,14 +233,14 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    marginVertical: 24,
+    marginVertical: verticalScale(24),
   },
   glowContainer: {
     position: "absolute",
-    top: 15,
+    top: verticalScale(15),
     width: CARD_WIDTH * 0.85,
     height: CARD_HEIGHT * 0.85,
-    borderRadius: 20,
+    borderRadius: moderateScale(20),
     zIndex: -1,
   },
   glow: {
@@ -242,7 +251,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 16,
+    borderRadius: moderateScale(16),
     overflow: "hidden",
     position: "relative",
     borderWidth: 1,
@@ -265,7 +274,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: scale(20),
     zIndex: 2,
     justifyContent: "space-between",
   },
@@ -273,6 +282,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
+    paddingBottom: verticalScale(8), // Add spacing to separate from body content
   },
   logoRow: {
     flexDirection: "row",
@@ -280,27 +290,27 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   logoContainer: {
-    width: 40,
-    height: 40,
+    width: scale(40),
+    height: scale(40),
     backgroundColor: "#FFF",
-    borderRadius: 20,
+    borderRadius: moderateScale(20),
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
   logoImage: {
-    width: 36,
-    height: 36,
+    width: scale(36),
+    height: scale(36),
   },
   institutionName: {
     color: "#3DDC97", // Accent
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: "900",
     letterSpacing: 0.5,
   },
   institutionSub: {
     color: "rgba(255,255,255,0.8)",
-    fontSize: 8,
+    fontSize: normalizeFont(8),
     fontWeight: "600",
     letterSpacing: 2,
   },
@@ -313,7 +323,7 @@ const styles = StyleSheet.create({
   photoContainer: {
     width: CARD_WIDTH * 0.25,
     height: CARD_WIDTH * 0.32,
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.1)",
@@ -325,7 +335,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   photoInitials: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: "700",
     color: "#475569",
   },
@@ -341,24 +351,24 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "rgba(61, 220, 151, 0.8)", // Mint tint
-    fontSize: 8,
+    fontSize: normalizeFont(8),
     fontWeight: "700",
     letterSpacing: 1,
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
   },
   valueName: {
     color: "#FFF",
-    fontSize: 24, // Increased back to large
+    fontSize: normalizeFont(24), // Increased back to large
     fontWeight: "700", // Consistent bold weight
     letterSpacing: 0.5,
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   value: {
     color: "#FFF",
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: "600",
   },
   row: {
@@ -371,15 +381,15 @@ const styles = StyleSheet.create({
   roleContainer: {
     backgroundColor: "rgba(61, 220, 151, 0.15)",
     alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 100,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(100),
     borderWidth: 1,
     borderColor: "rgba(61, 220, 151, 0.3)",
   },
   roleText: {
     color: "#3DDC97",
-    fontSize: 10,
+    fontSize: normalizeFont(10),
     fontWeight: "800",
     letterSpacing: 1,
   },
@@ -400,7 +410,7 @@ const styles = StyleSheet.create({
   },
   collegeCode: {
     color: "rgba(255,255,255,0.5)",
-    fontSize: 10,
+    fontSize: normalizeFont(10),
     fontWeight: "700",
     fontFamily: "monospace",
   },

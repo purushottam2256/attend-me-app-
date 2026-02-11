@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Fonts, Layout } from '../../constants';
+import { verticalScale } from '../../utils/responsive';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
 
     // Sizes
     size_sm: {
-        height: 36,
+        height: verticalScale(36),
         paddingHorizontal: Layout.spacing.md,
     },
     size_md: {
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Layout.button.paddingHorizontal,
     },
     size_lg: {
-        height: 56,
+        height: verticalScale(56),
         paddingHorizontal: Layout.spacing['2xl'],
     },
 

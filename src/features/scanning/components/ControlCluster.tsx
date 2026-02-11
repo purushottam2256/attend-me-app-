@@ -5,6 +5,7 @@
 
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../contexts';
 
@@ -96,7 +97,7 @@ export const ControlCluster: React.FC<ControlClusterProps> = ({
     <View style={styles.container}>
       {/* Timer Display - Minimal glass */}
       <TouchableOpacity style={styles.timerContainer} onPress={onTimerPress} activeOpacity={0.7}>
-        <Ionicons name="timer-outline" size={15} color={COLORS.textSecondary} />
+        <Ionicons name="timer-outline" size={normalizeFont(15)} color={COLORS.textSecondary} />
         <Text style={styles.timerText}>
           {isAutoPilot ? `Until ${endTime}` : formatTime(timeRemaining)}
         </Text>
@@ -107,7 +108,7 @@ export const ControlCluster: React.FC<ControlClusterProps> = ({
         {/* Rescan */}
         <TouchableOpacity style={styles.controlButton} onPress={handleRescan} activeOpacity={0.7}>
           <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-            <Ionicons name="refresh" size={20} color={COLORS.textPrimary} />
+            <Ionicons name="refresh" size={normalizeFont(20)} color={COLORS.textPrimary} />
           </Animated.View>
         </TouchableOpacity>
 
@@ -116,9 +117,9 @@ export const ControlCluster: React.FC<ControlClusterProps> = ({
           <Animated.View style={[styles.playButton, { transform: [{ scale: scaleAnim }] }]}>
             <Ionicons 
               name={isScanning ? 'pause' : 'play'} 
-              size={26} 
+              size={normalizeFont(26)} 
               color="#000000" 
-              style={!isScanning && { marginLeft: 2 }}
+              style={!isScanning && { marginLeft: scale(2) }}
             />
           </Animated.View>
         </TouchableOpacity>
@@ -139,22 +140,22 @@ export const ControlCluster: React.FC<ControlClusterProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginTop: 24,
-    gap: 18,
+    marginTop: verticalScale(24),
+    gap: verticalScale(18),
   },
   timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: scale(8),
     backgroundColor: COLORS.surface,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 14,
+    paddingHorizontal: scale(18),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(14),
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   timerText: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '600',
     color: COLORS.textPrimary,
     fontVariant: ['tabular-nums'],
@@ -163,12 +164,12 @@ const styles = StyleSheet.create({
   controlRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 18,
+    gap: scale(18),
   },
   controlButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: scale(48),
+    height: scale(48),
+    borderRadius: moderateScale(24),
     backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -176,28 +177,28 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   playButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: scale(64),
+    height: scale(64),
+    borderRadius: moderateScale(32),
     backgroundColor: COLORS.accent,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: COLORS.accent,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: verticalScale(6) },
     shadowOpacity: 0.35,
-    shadowRadius: 14,
+    shadowRadius: moderateScale(14),
     elevation: 8,
   },
   batchButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 24,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(24),
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   batchLabel: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '600',
     color: COLORS.textPrimary,
     letterSpacing: 0.5,

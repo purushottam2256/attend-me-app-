@@ -20,7 +20,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import * as LocalAuthentication from 'expo-local-authentication';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +29,7 @@ import { useNetwork } from '../../../contexts';
 import { SlideToLogin, SlideToLoginRef } from '../../../components/ui';
 import { Colors } from '../../../constants';
 import { signIn, isBiometricEnabled, getStoredProfile, getCurrentSession } from '../../../services/authService';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 const { width, height } = Dimensions.get('window');
 
@@ -47,8 +47,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasBiometric, setHasBiometric] = useState(false);
-  const [biometricType, setBiometricType] = useState<string>('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const { isOnline, queueAction } = useNetwork();
@@ -63,7 +61,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   useEffect(() => {
     startEntryAnimation();
-    checkBiometricAvailability();
     loadLastEmail();
   }, []);
 
@@ -110,26 +107,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
-  const checkBiometricAvailability = async () => {
-    try {
-      const compatible = await LocalAuthentication.hasHardwareAsync();
-      const enrolled = await LocalAuthentication.isEnrolledAsync();
-      const storedProfile = await getStoredProfile();
 
-      // Biometric only for returning users (who have a stored profile)
-      if (compatible && enrolled && storedProfile) {
-        setHasBiometric(true);
-        const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
-        if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
-          setBiometricType('Face ID');
-        } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
-          setBiometricType('Fingerprint');
-        }
-      }
-    } catch (error) {
-      console.error('Biometric check error:', error);
-    }
-  };
 
   const togglePasswordVisibility = () => {
     Animated.sequence([
@@ -182,40 +160,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
 
-  const handleBiometricLogin = async () => {
-    try {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: `Sign in with ${biometricType}`,
-        cancelLabel: 'Cancel',
-        disableDeviceFallback: false,
-      });
 
-      if (result.success) {
-        // If Online: Verify valid session with server
-        // If Offline: Trust local profile (cache mode)
-        if (isOnline) {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            
-            if (error || !user) {
-                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                setError("Session expired. Please log in with password.");
-                return;
-            }
-        }
-
-        const profile = await getStoredProfile();
-        if (profile) {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            onLoginSuccess(profile.full_name || 'User', (profile.role as any) || 'faculty');
-        } else {
-            setError("Profile not found locally.");
-        }
-      }
-    } catch (error) {
-      console.error('Biometric error:', error);
-      setError("Biometric authentication failed");
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -357,30 +302,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     />
                   </View>
 
-                  {/* Biometric */}
-                  {hasBiometric && (
-                    <View style={styles.biometricSection}>
-                      <View style={styles.divider}>
-                        <View style={styles.dividerLine} />
-                        <Text style={styles.dividerText}>or</Text>
-                        <View style={styles.dividerLine} />
-                      </View>
 
-                      <TouchableOpacity
-                        style={styles.biometricButton}
-                        onPress={handleBiometricLogin}
-                      >
-                        <Ionicons 
-                          name={biometricType === 'Face ID' ? 'scan-outline' : 'finger-print'} 
-                          size={28} 
-                          color={Colors.premium.accent} 
-                        />
-                        <Text style={styles.biometricText}>
-                          Use {biometricType}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
                 </View>
               </BlurView>
             </Animated.View>
@@ -413,18 +335,18 @@ const styles = StyleSheet.create({
     opacity: 0.08,
   },
   orb1: {
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    top: -80,
-    right: -80,
+    width: scale(300),
+    height: scale(300),
+    borderRadius: moderateScale(150),
+    top: verticalScale(-80),
+    right: scale(-80),
   },
   orb2: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    bottom: 100,
-    left: -60,
+    width: scale(200),
+    height: scale(200),
+    borderRadius: moderateScale(100),
+    bottom: verticalScale(100),
+    left: scale(-60),
   },
   safeArea: {
     flex: 1,
@@ -434,157 +356,118 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: scale(24),
     justifyContent: 'center',
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: verticalScale(32),
   },
   logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 16,
+    width: scale(80),
+    height: scale(80),
+    borderRadius: moderateScale(16),
   },
   appName: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: '700',
     color: Colors.premium.textPrimary,
     letterSpacing: 1.5,
-    marginTop: 16,
+    marginTop: verticalScale(16),
   },
   tagline: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     color: Colors.premium.textSecondary,
-    marginTop: 4,
+    marginTop: verticalScale(4),
     letterSpacing: 0.5,
   },
   formCard: {
-    borderRadius: 24,
+    borderRadius: moderateScale(24),
     overflow: 'hidden',
   },
   blur: {
-    borderRadius: 24,
+    borderRadius: moderateScale(24),
     overflow: 'hidden',
   },
   formInner: {
-    padding: 24,
+    padding: scale(24),
     backgroundColor: Colors.premium.surface,
   },
   welcomeText: {
-    fontSize: 34,
+    fontSize: normalizeFont(34),
     fontWeight: '700',
     color: Colors.premium.textPrimary,
-    marginBottom: 6,
+    marginBottom: verticalScale(6),
   },
   subtitleText: {
-    fontSize: 17,
+    fontSize: normalizeFont(17),
     color: Colors.premium.textSecondary,
-    marginBottom: 28,
+    marginBottom: verticalScale(28),
   },
   errorContainer: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: moderateScale(12),
+    padding: scale(12),
+    marginBottom: verticalScale(16),
     borderWidth: 1,
     borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   errorText: {
     color: '#FCA5A5',
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.premium.surface,
-    borderRadius: 14,
+    borderRadius: moderateScale(14),
     borderWidth: 1,
     borderColor: Colors.premium.border,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    height: 56,
+    paddingHorizontal: scale(16),
+    marginBottom: verticalScale(16),
+    height: verticalScale(56),
   },
   inputFocused: {
     borderColor: Colors.premium.borderFocus,
     backgroundColor: Colors.premium.surfaceLight,
   },
   inputIcon: {
-    fontSize: 16,
-    marginRight: 12,
+    fontSize: normalizeFont(16),
+    marginRight: scale(12),
     opacity: 0.7,
   },
   input: {
     flex: 1,
-    fontSize: 17,
+    fontSize: normalizeFont(17),
     color: Colors.premium.textPrimary,
   },
   eyeButton: {
-    padding: 8,
+    padding: scale(8),
   },
   eyeIcon: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     opacity: 0.7,
   },
   forgotButton: {
     alignSelf: 'flex-end',
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   forgotText: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     color: Colors.premium.accent,
     fontWeight: '500',
   },
   sliderWrapper: {
-    marginBottom: 16,
-  },
-  biometricSection: {
-    marginTop: 8,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.premium.border,
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 12,
-    color: Colors.premium.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  biometricButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.premium.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.premium.border,
-    paddingVertical: 14,
-  },
-  biometricIcon: {
-    fontSize: 18,
-    marginRight: 10,
-  },
-  biometricText: {
-    fontSize: 14,
-    color: Colors.premium.textSecondary,
-    fontWeight: '500',
+    marginBottom: verticalScale(16),
   },
   footer: {
     alignItems: 'center',
-    marginTop: 32,
-    paddingBottom: 20,
+    marginTop: verticalScale(32),
+    paddingBottom: verticalScale(20),
   },
   footerText: {
-    fontSize: 11,
+    fontSize: normalizeFont(11),
     color: Colors.premium.textMuted,
     letterSpacing: 0.5,
   },

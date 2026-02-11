@@ -50,6 +50,7 @@ import {
   type BlockReason,
 } from "../components";
 import { ZenToast } from "../../../components/ZenToast";
+import { scale, verticalScale, moderateScale, normalizeFont } from "../../../utils/responsive";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -886,7 +887,7 @@ export const ScanScreen: React.FC = () => {
             <View style={styles.ringSegment} />
           </Animated.View>
           <View style={styles.innerCircle}>
-            <Ionicons name="bluetooth" size={40} color={COLORS.accent} />
+            <Ionicons name="bluetooth" size={normalizeFont(40)} color={COLORS.accent} />
           </View>
         </View>
 
@@ -907,7 +908,7 @@ export const ScanScreen: React.FC = () => {
         </Text>
 
         <TouchableOpacity
-          style={{ marginTop: 40, padding: 10 }}
+          style={{ marginTop: verticalScale(40), padding: scale(10) }}
           onPress={() =>
             navigation.navigate("ManualEntry", {
               classData,
@@ -929,7 +930,7 @@ export const ScanScreen: React.FC = () => {
       <Animated.View
         style={[styles.successCircle, { transform: [{ scale: successScale }] }]}
       >
-        <Ionicons name="checkmark" size={64} color="#FFFFFF" />
+        <Ionicons name="checkmark" size={normalizeFont(64)} color="#FFFFFF" />
       </Animated.View>
       <Text style={styles.successTitle}>Attendance Submitted!</Text>
       <View style={styles.successStats}>
@@ -969,32 +970,28 @@ export const ScanScreen: React.FC = () => {
       <Animated.View
         style={[
           styles.header,
-          { paddingTop: insets.top + 12, opacity: headerOpacity },
+          { paddingTop: insets.top + verticalScale(12), opacity: headerOpacity },
         ]}
       >
         <TouchableOpacity style={styles.backButton} onPress={handleCancel}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Ionicons name="chevron-back" size={normalizeFont(24)} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{subjectName}</Text>
           <Text style={styles.headerSubtitle}>{section}</Text>
         </View>
-        <View style={{ flexDirection: "row", gap: 8 }}>
+        <View style={{ flexDirection: "row", gap: scale(8) }}>
 
           {isOfflineMode && (
             <View style={{
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                backgroundColor: 'rgba(255, 159, 10, 0.2)',
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: 'rgba(255, 159, 10, 0.5)',
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 4
+                gap: scale(6),
+                paddingHorizontal: scale(4),
+                opacity: 0.9
             }}>
-                <Ionicons name="cloud-offline" size={14} color="#FF9F0A" />
-                <Text style={{ color: '#FF9F0A', fontSize: 10, fontWeight: '700' }}>OFFLINE</Text>
+                <Ionicons name="cloud-offline" size={normalizeFont(16)} color="#FF9F0A" />
+                <Text style={{ color: '#FF9F0A', fontSize: normalizeFont(12), fontWeight: '600', letterSpacing: 0.5 }}>OFFLINE</Text>
             </View>
           )}
 
@@ -1004,7 +1001,7 @@ export const ScanScreen: React.FC = () => {
           >
             <Ionicons
               name={isAutoPilot ? "flash" : "flash-outline"}
-              size={22}
+              size={normalizeFont(22)}
               color={isAutoPilot ? COLORS.accent : COLORS.textSecondary}
             />
           </TouchableOpacity>
@@ -1018,6 +1015,7 @@ export const ScanScreen: React.FC = () => {
           total={totalCount}
           isScanning={isScanning}
           isAutoPilot={isAutoPilot}
+          size={SCREEN_WIDTH * 0.55} // Responsive size
         />
 
         <ControlCluster
@@ -1059,7 +1057,7 @@ export const ScanScreen: React.FC = () => {
         style={[
           styles.bottomBar,
           {
-            paddingBottom: insets.bottom + 12,
+            paddingBottom: insets.bottom + verticalScale(16),
             backgroundColor: isDark
               ? "rgba(10, 10, 10, 0.98)"
               : "rgba(248, 250, 252, 0.98)",
@@ -1115,7 +1113,7 @@ export const ScanScreen: React.FC = () => {
           onPress={handleSubmitPress}
         >
           <Text style={styles.submitButtonText}>Submit</Text>
-          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+          <Ionicons name="arrow-forward" size={normalizeFont(18)} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -1205,11 +1203,11 @@ export const ScanScreen: React.FC = () => {
                 styles.modalAvatarPlaceholder,
                 {
                   backgroundColor: "rgba(245, 158, 11, 0.15)",
-                  marginBottom: 24,
+                  marginBottom: verticalScale(24),
                 },
               ]}
             >
-              <Ionicons name="bluetooth" size={32} color="#F59E0B" />
+              <Ionicons name="bluetooth" size={normalizeFont(32)} color="#F59E0B" />
             </View>
 
             <Text style={styles.modalName}>
@@ -1218,13 +1216,13 @@ export const ScanScreen: React.FC = () => {
             <Text
               style={[
                 styles.modalRoll,
-                { textAlign: "center", marginBottom: 24 },
+                { textAlign: "center", marginBottom: verticalScale(24) },
               ]}
             >
               {bleError.message || "Please enable Bluetooth."}
             </Text>
 
-            <View style={{ flexDirection: "row", gap: 12, width: "100%" }}>
+            <View style={{ flexDirection: "row", gap: scale(12), width: "100%" }}>
               <TouchableOpacity
                 style={[
                   styles.bulkButton,
@@ -1279,28 +1277,28 @@ const styles = StyleSheet.create({
   // Decorative orbs (same as home page)
   orb: {
     position: "absolute",
-    borderRadius: 200,
+    borderRadius: moderateScale(200),
   },
   orb1: {
-    width: 300,
-    height: 300,
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.8,
     backgroundColor: "rgba(61, 220, 151, 0.15)",
-    top: -100,
-    right: -100,
+    top: -SCREEN_WIDTH * 0.25,
+    right: -SCREEN_WIDTH * 0.25,
   },
   orb2: {
-    width: 250,
-    height: 250,
+    width: SCREEN_WIDTH * 0.65,
+    height: SCREEN_WIDTH * 0.65,
     backgroundColor: "rgba(255, 255, 255, 0.05)",
-    bottom: 200,
-    left: -80,
+    bottom: SCREEN_WIDTH * 0.5,
+    left: -SCREEN_WIDTH * 0.2,
   },
   orb3: {
-    width: 180,
-    height: 180,
+    width: SCREEN_WIDTH * 0.5,
+    height: SCREEN_WIDTH * 0.5,
     backgroundColor: "rgba(61, 220, 151, 0.08)",
-    bottom: 400,
-    right: -40,
+    bottom: SCREEN_WIDTH * 1.0,
+    right: -SCREEN_WIDTH * 0.1,
   },
 
   // Handshake styles
@@ -1308,20 +1306,20 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: scale(32),
   },
   handshakeVisual: {
-    width: 140,
-    height: 140,
+    width: scale(140),
+    height: scale(140),
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 32,
+    marginBottom: verticalScale(32),
   },
   outerRing: {
     position: "absolute",
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: scale(140),
+    height: scale(140),
+    borderRadius: moderateScale(70),
     borderWidth: 3,
     borderColor: "transparent",
     borderTopColor: COLORS.accent,
@@ -1329,18 +1327,18 @@ const styles = StyleSheet.create({
   },
   ringSegment: {
     position: "absolute",
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: scale(10),
+    height: scale(10),
+    borderRadius: moderateScale(5),
     backgroundColor: COLORS.accent,
-    top: -3,
+    top: verticalScale(-3),
     left: "50%",
-    marginLeft: -5,
+    marginLeft: scale(-5),
   },
   innerCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: scale(100),
+    height: scale(100),
+    borderRadius: moderateScale(50),
     backgroundColor: COLORS.surface,
     alignItems: "center",
     justifyContent: "center",
@@ -1348,33 +1346,33 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   handshakeTitle: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: "700",
     color: COLORS.textPrimary,
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
     letterSpacing: -0.5,
   },
   handshakeSubtitle: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: "500",
     color: COLORS.textSecondary,
-    marginBottom: 32,
+    marginBottom: verticalScale(32),
   },
   progressContainer: {
-    width: SCREEN_WIDTH - 80,
-    height: 4,
+    width: SCREEN_WIDTH - scale(80),
+    height: verticalScale(4),
     backgroundColor: COLORS.surface,
-    borderRadius: 2,
+    borderRadius: moderateScale(2),
     overflow: "hidden",
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   progressBar: {
     height: "100%",
     backgroundColor: COLORS.accent,
-    borderRadius: 2,
+    borderRadius: moderateScale(2),
   },
   handshakeStatus: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: "500",
     color: COLORS.textMuted,
   },
@@ -1384,67 +1382,67 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: scale(32),
   },
   successCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: scale(120),
+    height: scale(120),
+    borderRadius: moderateScale(60),
     backgroundColor: COLORS.accent,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 32,
+    marginBottom: verticalScale(32),
     shadowColor: COLORS.accent,
-    shadowOffset: { width: 0, height: 12 },
+    shadowOffset: { width: 0, height: verticalScale(12) },
     shadowOpacity: 0.4,
-    shadowRadius: 24,
+    shadowRadius: moderateScale(24),
     elevation: 12,
   },
   successTitle: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontWeight: "700",
     color: COLORS.textPrimary,
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
     letterSpacing: -0.5,
   },
   successStats: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   successStatItem: {
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: scale(24),
   },
   successStatValue: {
-    fontSize: 36,
+    fontSize: normalizeFont(36),
     fontWeight: "800",
     color: COLORS.accent,
   },
   successStatLabel: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: "500",
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   successDivider: {
     width: 1,
-    height: 50,
+    height: verticalScale(50),
     backgroundColor: COLORS.border,
   },
   successSubtext: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: "500",
     color: COLORS.textMuted,
   },
   submittingSpinner: {
-    width: 80,
-    height: 80,
+    width: scale(80),
+    height: scale(80),
     backgroundColor: COLORS.surface,
-    borderRadius: 40,
+    borderRadius: moderateScale(40),
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
 
   // Scanning styles
@@ -1454,13 +1452,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: scale(16),
+    paddingBottom: verticalScale(16),
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: scale(40),
+    height: scale(40),
+    borderRadius: moderateScale(12),
     backgroundColor: COLORS.surface,
     alignItems: "center",
     justifyContent: "center",
@@ -1470,36 +1468,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: normalizeFont(22),
     fontWeight: "700",
     color: COLORS.textPrimary,
     letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: "600",
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   menuButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: scale(40),
+    height: scale(40),
+    borderRadius: moderateScale(12),
     backgroundColor: COLORS.surface,
     alignItems: "center",
     justifyContent: "center",
   },
   radarZone: {
     alignItems: "center",
-    paddingVertical: 16,
-    paddingBottom: 24,
+    paddingVertical: verticalScale(16),
+    paddingBottom: verticalScale(24),
   },
   listZone: {
-    flex: 1.5,
-    minHeight: "50%",
-    marginTop: 8,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    flex: 2,
+    marginTop: verticalScale(8),
+    borderTopLeftRadius: moderateScale(28),
+    borderTopRightRadius: moderateScale(28),
     overflow: "hidden",
   },
   bottomBar: {
@@ -1510,46 +1507,46 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(16),
     backgroundColor: "rgba(248, 250, 252, 0.98)",
     borderTopWidth: 1,
     borderTopColor: "rgba(0,0,0,0.05)",
   },
   bottomStats: {
     flexDirection: "row",
-    gap: 16,
+    gap: scale(16),
   },
   bottomStatItem: {
     alignItems: "center",
-    minWidth: 50,
+    minWidth: scale(50),
   },
   bottomStatValue: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: "800",
   },
   bottomStatLabel: {
-    fontSize: 10,
+    fontSize: normalizeFont(10),
     fontWeight: "600",
     color: "#6B7280",
-    marginTop: 2,
+    marginTop: verticalScale(2),
   },
   submitButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: scale(8),
     backgroundColor: COLORS.gradientStart,
-    paddingHorizontal: 28,
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingHorizontal: scale(28),
+    paddingVertical: verticalScale(16),
+    borderRadius: moderateScale(16),
     shadowColor: COLORS.gradientStart,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 4,
   },
   submitButtonText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: "700",
     color: "#FFFFFF",
   },
@@ -1559,45 +1556,45 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: scale(20),
   },
   modalCard: {
     width: "85%",
     backgroundColor: "rgba(30,30,30,0.9)",
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: moderateScale(24),
+    padding: scale(24),
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
   },
   modalAvatarPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: scale(64),
+    height: scale(64),
+    borderRadius: moderateScale(32),
     backgroundColor: "rgba(255,255,255,0.1)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   modalName: {
     color: "#FFF",
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
     textAlign: "center",
   },
-  modalRoll: { color: "rgba(255,255,255,0.6)", fontSize: 16, marginBottom: 16 },
-  modalInfo: { color: "rgba(255,255,255,0.5)", fontSize: 14, marginBottom: 4 },
+  modalRoll: { color: "rgba(255,255,255,0.6)", fontSize: normalizeFont(16), marginBottom: verticalScale(16) },
+  modalInfo: { color: "rgba(255,255,255,0.5)", fontSize: normalizeFont(14), marginBottom: verticalScale(4) },
   bulkButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(12),
     borderWidth: 1,
   },
-  bulkText: { fontWeight: "600", fontSize: 14 },
+  bulkText: { fontWeight: "600", fontSize: normalizeFont(14) },
 });
 
 export default ScanScreen;

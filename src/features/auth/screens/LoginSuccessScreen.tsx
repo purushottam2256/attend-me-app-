@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Fonts, Layout } from '../../../constants';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 const { width } = Dimensions.get('window');
 
@@ -171,6 +172,7 @@ export const LoginSuccessScreen: React.FC<LoginSuccessScreenProps> = ({
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -179,51 +181,51 @@ const styles = StyleSheet.create({
     padding: Layout.screenPadding,
   },
   successContainer: {
-    width: 120,
-    height: 120,
+    width: moderateScale(120),
+    height: moderateScale(120),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: verticalScale(30),
   },
   ring: {
     position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 4,
+    width: moderateScale(120),
+    height: moderateScale(120),
+    borderRadius: moderateScale(60),
+    borderWidth: scale(4),
     borderColor: 'rgba(255,255,255,0.3)',
   },
   checkContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: moderateScale(100),
+    height: moderateScale(100),
+    borderRadius: moderateScale(50),
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkmark: {
-    fontSize: 48,
+    fontSize: normalizeFont(48),
     color: '#fff',
     fontWeight: 'bold',
   },
   successText: {
-    fontSize: 28,
+    fontSize: normalizeFont(28),
     fontFamily: Fonts.family.bold,
     color: '#fff',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
   welcomeText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontFamily: Fonts.family.regular,
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
   },
   userName: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     fontFamily: Fonts.family.semiBold,
     color: '#fff',
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
 });
 

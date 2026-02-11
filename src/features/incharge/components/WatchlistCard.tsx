@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface WatchlistCardProps {
   studentName: string;
@@ -92,7 +93,7 @@ export const WatchlistCard: React.FC<WatchlistCardProps> = ({
             onPress={handleCallParent}
             activeOpacity={0.8}
           >
-            <Ionicons name="call" size={18} color="#FFFFFF" />
+            <Ionicons name="call" size={normalizeFont(18)} color="#FFFFFF" />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -100,7 +101,7 @@ export const WatchlistCard: React.FC<WatchlistCardProps> = ({
             onPress={handleWhatsApp}
             activeOpacity={0.8}
           >
-            <Ionicons name="logo-whatsapp" size={18} color="#FFFFFF" />
+            <Ionicons name="logo-whatsapp" size={normalizeFont(18)} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -111,21 +112,21 @@ export const WatchlistCard: React.FC<WatchlistCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: moderateScale(14),
     borderWidth: 1,
     overflow: 'hidden',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
   },
   urgencyBar: {
-    width: 4,
+    width: scale(4),
   },
   content: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    gap: 12,
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: scale(14),
+    gap: scale(12),
   },
   infoSection: {
     flex: 1,
@@ -133,48 +134,48 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: scale(8),
   },
   studentName: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '600',
     flex: 1,
   },
   criticalBadge: {
     backgroundColor: '#DC2626',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: scale(6),
+    paddingVertical: verticalScale(2),
+    borderRadius: moderateScale(4),
   },
   criticalText: {
     color: '#FFFFFF',
-    fontSize: 9,
+    fontSize: normalizeFont(9),
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   rollNo: {
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: normalizeFont(12),
+    marginTop: verticalScale(2),
   },
   percentageBox: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(10),
     alignItems: 'center',
-    minWidth: 56,
+    minWidth: scale(56),
   },
   percentageValue: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '800',
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: scale(8),
   },
   actionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: moderateScale(18),
     alignItems: 'center',
     justifyContent: 'center',
   },

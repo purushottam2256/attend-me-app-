@@ -27,6 +27,7 @@ import { supabase } from '../../../config/supabase';
 import { getTodaySchedule, getTomorrowSchedule, TimetableSlot } from '../../../services/dashboardService';
 import { useConnectionStatus } from '../../../hooks/useConnectionStatus'; // Added import
 import { swapStyles as styles } from '../styles/SwapScreen.styles';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 type SwapScreenRouteProp = RouteProp<{
     Swap: { classToSwap?: TimetableSlot };
@@ -548,25 +549,25 @@ export const SwapScreen: React.FC = () => {
                 opacity: fadeAnim, 
                 transform: [{ scale: scaleAnim }],
                 backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
-                width: 250, padding: 24, borderRadius: 24,
+                width: scale(250), padding: scale(24), borderRadius: moderateScale(24),
                 alignItems: 'center', justifyContent: 'center',
-                shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10
+                shadowColor: "#000", shadowOffset: { width: 0, height: verticalScale(10) }, shadowOpacity: 0.3, shadowRadius: moderateScale(20), elevation: 10
             }}>
                 <View style={{ 
-                    width: 64, height: 64, borderRadius: 32, 
+                    width: scale(64), height: scale(64), borderRadius: moderateScale(32), 
                     backgroundColor: feedback.type === 'success' ? '#22C55E' : feedback.type === 'error' ? '#EF4444' : '#F59E0B', 
-                    alignItems: 'center', justifyContent: 'center', marginBottom: 16 
+                    alignItems: 'center', justifyContent: 'center', marginBottom: verticalScale(16) 
                 }}>
                     <Ionicons 
                         name={feedback.type === 'success' ? "checkmark" : feedback.type === 'error' ? "alert" : "warning"} 
-                        size={32} color="#FFF" 
+                        size={normalizeFont(32)} color="#FFF" 
                     />
                 </View>
-                <Text style={{ fontSize: 18, fontWeight: '600', color: isDark ? '#FFF' : '#000', marginBottom: 8, textAlign: 'center' }}>
+                <Text style={{ fontSize: normalizeFont(18), fontWeight: '600', color: isDark ? '#FFF' : '#000', marginBottom: verticalScale(8), textAlign: 'center' }}>
                     {feedback.message}
                 </Text>
                 {feedback.subMessage && (
-                    <Text style={{ fontSize: 14, color: isDark ? '#94A3B8' : '#64748B', textAlign: 'center' }}>
+                    <Text style={{ fontSize: normalizeFont(14), color: isDark ? '#94A3B8' : '#64748B', textAlign: 'center' }}>
                         {feedback.subMessage}
                     </Text>
                 )}
@@ -584,9 +585,9 @@ export const SwapScreen: React.FC = () => {
         borderColor: isSelected ? colors.accent : colors.cardBorder,
         borderWidth: isSelected ? 1.5 : 1,
         shadowColor: isSelected ? colors.accent : '#000',
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: verticalScale(4) },
         shadowOpacity: isSelected ? 0.3 : 0.2,
-        shadowRadius: 8,
+        shadowRadius: moderateScale(8),
         elevation: isSelected ? 8 : 4,
       }]}
       onPress={onPress}
@@ -612,7 +613,7 @@ export const SwapScreen: React.FC = () => {
             <Text style={[styles.classTime, { color: isSelected ? colors.accent : colors.textMuted }]}>
               {slot.slot_id?.toUpperCase()}
             </Text>
-            <Text style={{ fontSize: 11, color: colors.textMuted }}>
+            <Text style={{ fontSize: normalizeFont(11), color: colors.textMuted }}>
               {slot.start_time}
             </Text>
           </View>
@@ -630,9 +631,9 @@ export const SwapScreen: React.FC = () => {
         borderColor: isSelected ? colors.accent : colors.cardBorder,
         borderWidth: isSelected ? 1.5 : 1,
         shadowColor: isSelected ? colors.accent : '#000',
-        shadowOffset: { width: 0, height: 3 },
+        shadowOffset: { width: 0, height: verticalScale(3) },
         shadowOpacity: isSelected ? 0.25 : 0.15,
-        shadowRadius: 6,
+        shadowRadius: moderateScale(6),
         elevation: isSelected ? 6 : 3,
       }]}
       onPress={onPress}
@@ -657,20 +658,20 @@ export const SwapScreen: React.FC = () => {
         </Text>
         {/* Swap Slot Info */}
         {(faculty as any).target_slot && (
-           <View style={{ marginTop: 6, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <View style={{ backgroundColor: isSelected ? '#FFF' : colors.accent + '20', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                  <Text style={{ color: isSelected ? colors.accent : colors.accent, fontSize: 11, fontWeight: '700' }}>
+           <View style={{ marginTop: verticalScale(6), flexDirection: 'row', gap: scale(8), alignItems: 'center' }}>
+              <View style={{ backgroundColor: isSelected ? '#FFF' : colors.accent + '20', paddingHorizontal: scale(8), paddingVertical: verticalScale(2), borderRadius: moderateScale(6) }}>
+                  <Text style={{ color: isSelected ? colors.accent : colors.accent, fontSize: normalizeFont(11), fontWeight: '700' }}>
                       {(faculty as any).target_slot.slot_id?.toUpperCase()}
                   </Text>
               </View>
-              <Text style={{ color: isSelected ? 'rgba(255,255,255,0.9)' : colors.textMuted, fontSize: 11, fontWeight: '500' }}>
+              <Text style={{ color: isSelected ? 'rgba(255,255,255,0.9)' : colors.textMuted, fontSize: normalizeFont(11), fontWeight: '500' }}>
                  {(faculty as any).target_slot.target_dept}-{(faculty as any).target_slot.target_year}-{(faculty as any).target_slot.target_section} • {(faculty as any).target_slot.start_time?.slice(0, 5)}
               </Text>
            </View>
         )}
       </View>
       {isSelected && (
-        <Ionicons name="checkmark-circle" size={22} color={colors.accent} />
+        <Ionicons name="checkmark-circle" size={normalizeFont(22)} color={colors.accent} />
       )}
     </TouchableOpacity>
   );
@@ -686,11 +687,11 @@ export const SwapScreen: React.FC = () => {
         {isShowingTomorrow && (
           <View style={{ 
             backgroundColor: colors.accent + '20', 
-            padding: 8, 
-            borderRadius: 8, 
-            marginBottom: 12 
+            padding: scale(8), 
+            borderRadius: moderateScale(8), 
+            marginBottom: verticalScale(12) 
           }}>
-            <Text style={{ color: colors.accent, fontSize: 12, textAlign: 'center' }}>
+            <Text style={{ color: colors.accent, fontSize: normalizeFont(12), textAlign: 'center' }}>
               Today's classes are done • Showing tomorrow's schedule
             </Text>
           </View>
@@ -751,20 +752,20 @@ export const SwapScreen: React.FC = () => {
           
           {/* Notes & Send Button */}
           {selectedFaculty && (
-            <View style={{ marginTop: 16 }}>
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 8 }]}>
+            <View style={{ marginTop: verticalScale(16) }}>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: verticalScale(8) }]}>
                 Add Note (Optional)
               </Text>
               
               {/* Quick suggestion chips */}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10, gap: 8 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: verticalScale(10), gap: scale(8) }}>
                 {['Personal Leave', 'Medical Appointment', 'Official Meeting'].map((suggestion) => (
                   <TouchableOpacity
                     key={suggestion}
                     style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      borderRadius: 16,
+                      paddingHorizontal: scale(12),
+                      paddingVertical: verticalScale(6),
+                      borderRadius: moderateScale(16),
                       backgroundColor: substituteNote === suggestion ? colors.accent : colors.inputBg,
                       borderWidth: 1,
                       borderColor: substituteNote === suggestion ? colors.accent : colors.inputBorder,
@@ -772,7 +773,7 @@ export const SwapScreen: React.FC = () => {
                     onPress={() => setSubstituteNote(substituteNote === suggestion ? '' : suggestion)}
                   >
                     <Text style={{ 
-                      fontSize: 12, 
+                      fontSize: normalizeFont(12), 
                       color: substituteNote === suggestion ? '#FFF' : colors.textSecondary 
                     }}>
                       {suggestion}
@@ -787,9 +788,9 @@ export const SwapScreen: React.FC = () => {
                   borderColor: colors.inputBorder,
                   borderWidth: 1,
                   color: colors.textPrimary,
-                  padding: 12,
-                  borderRadius: 12,
-                  minHeight: 60,
+                  padding: scale(12),
+                  borderRadius: moderateScale(12),
+                  minHeight: verticalScale(60),
                   textAlignVertical: 'top',
                 }]}
                 placeholder="Or type a custom reason..."
@@ -801,10 +802,10 @@ export const SwapScreen: React.FC = () => {
               />
               
               <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: colors.accent, marginTop: 16 }]}
+                style={[styles.actionBtn, { backgroundColor: colors.accent, marginTop: verticalScale(16) }]}
                 onPress={sendSubstituteRequest}
               >
-                <Ionicons name="send" size={20} color="#FFF" />
+                <Ionicons name="send" size={normalizeFont(20)} color="#FFF" />
                 <Text style={styles.actionBtnText}>Send Substitute Request</Text>
               </TouchableOpacity>
             </View>
@@ -825,11 +826,11 @@ export const SwapScreen: React.FC = () => {
         {isShowingTomorrow && (
           <View style={{ 
             backgroundColor: colors.accent + '20', 
-            padding: 8, 
-            borderRadius: 8, 
-            marginBottom: 12 
+            padding: scale(8), 
+            borderRadius: moderateScale(8), 
+            marginBottom: verticalScale(12) 
           }}>
-            <Text style={{ color: colors.accent, fontSize: 12, textAlign: 'center' }}>
+            <Text style={{ color: colors.accent, fontSize: normalizeFont(12), textAlign: 'center' }}>
               Today's classes are done • Planning for tomorrow
             </Text>
           </View>
@@ -879,27 +880,27 @@ export const SwapScreen: React.FC = () => {
           ))}
           
           {sameClassFaculties.length === 0 && (
-            <Text style={[styles.emptySubtitle, { color: colors.textMuted, textAlign: 'center', marginTop: 20 }]}>
+            <Text style={[styles.emptySubtitle, { color: colors.textMuted, textAlign: 'center', marginTop: verticalScale(20) }]}>
               No other faculty teaches this class
             </Text>
           )}
 
           {/* Notes & Send Button (Shown immediately after selecting faculty) */}
           {swapTargetFaculty && swapTargetSlot && (
-            <View style={{ marginTop: 24, borderTopWidth: 1, borderTopColor: colors.cardBorder, paddingTop: 16 }}>
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 8 }]}>
+            <View style={{ marginTop: verticalScale(24), borderTopWidth: 1, borderTopColor: colors.cardBorder, paddingTop: verticalScale(16) }}>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: verticalScale(8) }]}>
                 Add Note (Optional)
               </Text>
               
               {/* Quick suggestion chips */}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10, gap: 8 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: verticalScale(10), gap: scale(8) }}>
                 {['Schedule Conflict', 'Personal Commitment', 'Travel Requirement'].map((suggestion) => (
                   <TouchableOpacity
                     key={suggestion}
                     style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      borderRadius: 16,
+                      paddingHorizontal: scale(12),
+                      paddingVertical: verticalScale(6),
+                      borderRadius: moderateScale(16),
                       backgroundColor: swapNote === suggestion ? colors.accent : colors.inputBg,
                       borderWidth: 1,
                       borderColor: swapNote === suggestion ? colors.accent : colors.inputBorder,
@@ -907,7 +908,7 @@ export const SwapScreen: React.FC = () => {
                     onPress={() => setSwapNote(swapNote === suggestion ? '' : suggestion)}
                   >
                     <Text style={{ 
-                      fontSize: 12, 
+                      fontSize: normalizeFont(12), 
                       color: swapNote === suggestion ? '#FFF' : colors.textSecondary 
                     }}>
                       {suggestion}
@@ -922,9 +923,9 @@ export const SwapScreen: React.FC = () => {
                   borderColor: colors.inputBorder,
                   borderWidth: 1,
                   color: colors.textPrimary,
-                  padding: 12,
-                  borderRadius: 12,
-                  minHeight: 60,
+                  padding: scale(12),
+                  borderRadius: moderateScale(12),
+                  minHeight: verticalScale(60),
                   textAlignVertical: 'top',
                 }]}
                 placeholder="Or type a custom reason..."
@@ -936,10 +937,10 @@ export const SwapScreen: React.FC = () => {
               />
               
               <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: colors.accent, marginTop: 16 }]}
+                style={[styles.actionBtn, { backgroundColor: colors.accent, marginTop: verticalScale(16) }]}
                 onPress={sendSwapRequest}
               >
-                <Ionicons name="swap-horizontal" size={20} color="#FFF" />
+                <Ionicons name="swap-horizontal" size={normalizeFont(20)} color="#FFF" />
                 <Text style={styles.actionBtnText}>Send Swap Request</Text>
               </TouchableOpacity>
             </View>
@@ -963,9 +964,9 @@ export const SwapScreen: React.FC = () => {
       >
         <View style={styles.titleRow}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+            <Ionicons name="chevron-back" size={normalizeFont(24)} color="#FFFFFF" />
           </TouchableOpacity>
-          <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={{ flex: 1, marginLeft: scale(12) }}>
             <Text style={styles.pageTitle}>Swap & Sub</Text>
             <Text style={styles.subtitle}>Manage class handoffs</Text>
           </View>
@@ -973,17 +974,17 @@ export const SwapScreen: React.FC = () => {
           {/* History Icon Button */}
           <TouchableOpacity
             style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
+                width: scale(40),
+                height: scale(40),
+                borderRadius: moderateScale(20),
                 backgroundColor: 'rgba(255,255,255,0.1)',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginRight: 8
+                marginRight: scale(8)
             }}
             onPress={() => navigation.navigate('SwapHistory')}
           >
-            <Ionicons name="time-outline" size={24} color="#FFFFFF" />
+            <Ionicons name="time-outline" size={normalizeFont(24)} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
         
@@ -1015,7 +1016,7 @@ export const SwapScreen: React.FC = () => {
         )}
         
         {/* Extra padding for dock */}
-        <View style={{ height: 80 }} />
+        <View style={{ height: verticalScale(80) }} />
       </ScrollView>
     </View>
   );

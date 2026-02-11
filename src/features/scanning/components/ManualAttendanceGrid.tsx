@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../../utils/responsive';
 
 interface Student {
   id: string;
@@ -29,13 +30,13 @@ interface ManualAttendanceGridProps {
 }
 
 const { width } = Dimensions.get('window');
-const GRID_PADDING = 12;
-const GAP = 8;
+const GRID_PADDING = scale(12);
+const GAP = scale(8);
 const COLUMNS = 5;
 const ITEM_SIZE = (width - (GRID_PADDING * 2) - (GAP * (COLUMNS - 1))) / COLUMNS;
 
 const StatusColors = {
-  pending: ['#10B981', '#059669'], // Green (Same as present)
+  pending: ['#9CA3AF', '#6B7280'], // Gray (unmarked)
   present: ['#10B981', '#059669'], // Green
   absent: ['#EF4444', '#DC2626'],  // Red
   od: ['#F59E0B', '#D97706'],      // Amber
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
   },
   gridContent: {
     padding: GRID_PADDING,
-    paddingBottom: 120, // Space for FAB
+    paddingBottom: verticalScale(120), // Space for FAB
   },
   columnWrapper: {
     gap: GAP,
@@ -163,17 +164,17 @@ const styles = StyleSheet.create({
   squareContainer: {
     width: ITEM_SIZE,
     height: ITEM_SIZE, // Square
-    borderRadius: 8, // Smaller radius for smaller items
+    borderRadius: moderateScale(8), // Smaller radius for smaller items
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: verticalScale(1) },
     shadowOpacity: 0.15,
-    shadowRadius: 2,
+    shadowRadius: moderateScale(2),
     elevation: 2,
   },
   squareGradient: {
     flex: 1,
-    borderRadius: 8,
-    padding: 2, // Less padding
+    borderRadius: moderateScale(8),
+    padding: scale(2), // Less padding
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   },
   rollText: {
     color: 'rgba(255,255,255,0.9)',
-    fontSize: 16, // Smaller font
+    fontSize: normalizeFont(16), // Smaller font
     fontWeight: '800',
     marginBottom: 0, // Tight layout
     fontVariant: ['tabular-nums'],
@@ -194,25 +195,25 @@ const styles = StyleSheet.create({
   },
   nameText: {
     color: 'rgba(255,255,255,0.85)',
-    fontSize: 9, // Very small for name
+    fontSize: normalizeFont(9), // Very small for name
     fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 10,
-    marginTop: 2,
+    lineHeight: normalizeFont(10),
+    marginTop: verticalScale(2),
     maxWidth: '100%',
   },
   statusBadge: {
     position: 'absolute',
-    top: 2,
-    right: 2,
+    top: scale(2),
+    right: scale(2),
     backgroundColor: 'rgba(0,0,0,0.25)',
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-    borderRadius: 3,
+    paddingHorizontal: scale(3),
+    paddingVertical: verticalScale(1),
+    borderRadius: moderateScale(3),
   },
   statusBadgeText: {
     color: '#FFF',
-    fontSize: 7,
+    fontSize: normalizeFont(7),
     fontWeight: '800',
   },
   checkIcon: { // Removed Check icon for space

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../utils/responsive';
 
 interface NoClassesHeroProps {
   reason?: 'sunday' | 'saturday' | 'holiday' | 'vacation' | 'no_schedule';
@@ -100,7 +101,7 @@ export const NoClassesHero: React.FC<NoClassesHeroProps> = ({
       }]}>
         {/* Date */}
         <View style={styles.dateRow}>
-          <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
+          <Ionicons name="calendar-outline" size={normalizeFont(14)} color={colors.textMuted} />
           <Text style={[styles.dateText, { color: colors.textMuted }]}>
             {formatDate()}
           </Text>
@@ -141,62 +142,62 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   card: {
     width: '100%',
-    borderRadius: 20,
+    borderRadius: moderateScale(20),
     borderWidth: 0.5,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
+    paddingVertical: verticalScale(32),
+    paddingHorizontal: scale(24),
     alignItems: 'center',
   },
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 20,
+    gap: scale(6),
+    marginBottom: verticalScale(20),
   },
   dateText: {
-    fontSize: 13,
+    fontSize: normalizeFont(13),
     fontWeight: '500',
   },
   emoji: {
-    fontSize: 56,
-    marginBottom: 16,
+    fontSize: normalizeFont(56),
+    marginBottom: verticalScale(16),
   },
   title: {
-    fontSize: 26,
+    fontSize: normalizeFont(26),
     fontWeight: '700',
     letterSpacing: -0.5,
-    marginBottom: 6,
+    marginBottom: verticalScale(6),
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: normalizeFont(15),
     fontWeight: '500',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   divider: {
-    width: 40,
-    height: 2,
-    borderRadius: 1,
-    marginBottom: 24,
+    width: scale(40),
+    height: verticalScale(2),
+    borderRadius: moderateScale(1),
+    marginBottom: verticalScale(24),
   },
   quote: {
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '400',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: verticalScale(22),
     fontStyle: 'italic',
-    paddingHorizontal: 8,
+    paddingHorizontal: scale(8),
   },
   author: {
-    fontSize: 12,
+    fontSize: normalizeFont(12),
     fontWeight: '500',
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: verticalScale(8),
   },
 });
 

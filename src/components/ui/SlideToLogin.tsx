@@ -15,12 +15,13 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../../constants';
+import { scale, verticalScale, moderateScale, normalizeFont } from '../../utils/responsive';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const SLIDER_WIDTH = SCREEN_WIDTH - 96;
-const THUMB_SIZE = 52;
-const TRACK_HEIGHT = 60;
-const PADDING = 4;
+const SLIDER_WIDTH = SCREEN_WIDTH - scale(96);
+const THUMB_SIZE = scale(52);
+const TRACK_HEIGHT = verticalScale(60);
+const PADDING = scale(4);
 
 export interface SlideToLoginRef {
   reset: () => void;
@@ -251,14 +252,14 @@ const styles = StyleSheet.create({
   },
   textWrapper: {
     position: 'absolute',
-    left: THUMB_SIZE + 16,
-    right: 16,
+    left: THUMB_SIZE + scale(16),
+    right: scale(16),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   slideText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '500',
     color: Colors.premium.textSecondary,
     letterSpacing: 0.5,
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   successText: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
     color: Colors.premium.accent,
   },
@@ -299,26 +300,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: Colors.premium.accent,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.5,
-    shadowRadius: 10,
+    shadowRadius: moderateScale(10),
     elevation: 8,
   },
   thumbSuccess: {
     backgroundColor: Colors.status.success,
   },
   thumbIcon: {
-    fontSize: 22,
+    fontSize: normalizeFont(22),
     color: '#1E1B4B',
     fontWeight: '700',
   },
   playIcon: {
     width: 0,
     height: 0,
-    marginLeft: 4,
-    borderLeftWidth: 16,
-    borderTopWidth: 12,
-    borderBottomWidth: 12,
+    marginLeft: scale(4),
+    borderLeftWidth: scale(16),
+    borderTopWidth: scale(12),
+    borderBottomWidth: scale(12),
     borderLeftColor: '#1E1B4B',
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
